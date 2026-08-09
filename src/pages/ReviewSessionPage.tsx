@@ -1,4 +1,5 @@
 import { AlertTriangle, ArrowLeft, CheckCircle2, CircleSlash, ExternalLink } from 'lucide-react'
+import { useEffect } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { Notice, PageHeader, Progress, StatusPill } from '../components/ui'
 import { db } from '../lib/db'
@@ -8,6 +9,7 @@ import { displayDate } from '../lib/utils'
 
 export default function ReviewSessionPage() {
   const { sessionId } = useParams(); const { athletes, sessions, measurements, standards } = useData(); const session = sessions.find((s) => s.id === sessionId); const version = standards.find((s) => s.id === session?.standardsVersionId)
+  useEffect(() => { if (session?.status === 'in_progress') void db.sessions.update(session.id, { status: 'review', updatedAt: new Date().toISOString() }) }, [session])
   if (!session || !version) return <div className="page"><Notice tone="warning">Session not found.</Notice></div>
   const roster = athletes.filter((a) => session.athleteIds.includes(a.id)); const results = measurements.filter((m) => m.sessionId === session.id); const expected = roster.length * session.metricIds.length; const problems = results.filter((measurement) => { const metric = version.metrics.find((item) => item.id === measurement.metricId); return measurement.status !== 'valid' || (metric && !isMetricValueValid(metric, measurement.selectedAttempt)) }); const valid = results.filter((m) => m.status === 'valid' && m.selectedAttempt !== null && !problems.some((problem) => problem.id === m.id)).length; const complete = roster.every((a) => scoreAssessment(version, results, a.id).complete) && problems.length === 0
   async function publish() { if (!complete || problems.length) return; await db.sessions.update(session!.id, { status: 'published', publishedAt: new Date().toISOString(), updatedAt: new Date().toISOString() }) }
