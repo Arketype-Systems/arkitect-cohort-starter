@@ -1,6 +1,6 @@
 # Fieldhouse Assessment Starter
 
-Fieldhouse is a polished, local first assessment application for sports performance coaches. It manages athletes, captures multiple testing attempts, reviews completeness, publishes versioned scores, imports and exports CSV files, and creates one athlete report at a time.
+Fieldhouse is a polished, local first assessment application for sports performance coaches. It manages multi-sport athlete profiles, captures multiple testing attempts, reviews completeness, publishes versioned point totals, imports and exports CSV files, and creates one athlete report at a time.
 
 The included athletes, sessions, results, and standards are clearly labeled synthetic examples. No real athlete data or proprietary performance standards are included.
 
@@ -42,10 +42,11 @@ Browser storage belongs to the device and browser profile. Clearing site data ca
 ## Everyday workflow
 
 1. Open **Athletes** to review or add the roster.
-2. Open **Testing → New session** to select a roster and tests.
-3. Use live intake to record attempts. The best valid attempt is selected according to scoring direction and saved automatically.
-4. Open review. Publication remains locked until all required results are valid.
-5. Publish, then open **Reporting** for individual athlete reports.
+2. Add sex, date of birth, grade, training group, and every relevant sport and position. These fields can resolve different standards profiles.
+3. Open **Testing → New session** to select a roster and tests. The matching standards profile is shown for each athlete and pinned to the session.
+4. Use live intake to record attempts. The best valid attempt is selected according to scoring direction and saved automatically.
+5. Open review. Publication remains locked until all required results are valid.
+6. Publish, then open **Reporting** for individual athlete reports and summed point totals. Dashboard charts update from published results.
 
 ## CSV import
 
@@ -89,14 +90,17 @@ There is intentionally no silent cloud backup. Treat exported JSON files as sens
 
 The included `Editable U.S. S&C Starter Battery` uses five synthetic performance bands per metric. It demonstrates inches, seconds, and repetitions commonly used in United States strength and conditioning settings. It is not a validated population norm.
 
-- Each metric declares whether higher or lower is better.
+- Each metric awards exactly 0, 1, 2, 3, or 4 points and declares whether higher or lower is better.
+- An athlete point total is the sum of the five metric grades. The included battery therefore has a maximum of 20 points.
 - Boundaries are half open and deterministic.
-- Every score names standards version `1.0.0`.
+- Standards profiles can target sex, age range, grade, sport, and position. Blank fields mean any value. Priority resolves intentional overlaps.
+- The resolved profile is pinned per athlete when a session opens. Later roster or standards edits cannot silently change that session's scoring contract.
+- Every score names both the standards version and standards profile.
 - Every required metric must be valid before an overall score exists.
 - Missing or excluded required results return **Incomplete**. Weight is never redistributed.
 - Reports filter measurements by both athlete ID and session ID. They never borrow another athlete’s result.
 
-Use **Standards → Create version** to create an append-only scoring revision. Existing sessions and reports remain attached to their exact original version. The editor rejects weight drift, invalid ranges, band gaps, band overlaps, and points that are reversed for the declared scoring direction. The bundled default remains in `src/lib/standards.ts`; update the explicit fixtures in `src/lib/scoring.test.ts` if a developer intentionally changes that seed.
+Use **Standards → Create version** to create an append-only scoring revision. Add as many audience profiles as needed, then edit the five metric bands inside each profile. Existing sessions and reports remain attached to their exact original version and pinned athlete profile. The editor rejects weight drift, invalid ranges, band gaps, band overlaps, missing fallback profiles, points outside 0 through 4, and points that are reversed for the declared scoring direction. The bundled default remains in `src/lib/standards.ts`; update the explicit fixtures in `src/lib/scoring.test.ts` if a developer intentionally changes that seed.
 
 Metric-specific valid ranges are part of each standards version. Live intake automatically marks an out-of-range selected attempt invalid. Review allows every captured result to be marked Valid, Invalid, or Excluded. Published sessions are locked against further live-entry changes.
 
