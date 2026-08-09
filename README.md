@@ -4,14 +4,14 @@ Fieldhouse is a polished, local first assessment application for sports performa
 
 The included athletes, sessions, results, and standards are clearly labeled synthetic examples. No real athlete data or proprietary performance standards are included.
 
-## Create the repository you own
+## Create the repository you control
 
 You need a GitHub account, Git, Node.js 20 or newer, and a coding agent such as Codex or Claude Code. Follow the complete [Connect Day guide](CONNECT_DAY_GUIDE.md) when setting this up for the first time.
 
 1. Sign in to GitHub and open the [Arkitect Cohort Starter](https://github.com/Arketype-Systems/arkitect-cohort-starter).
 2. Select **Use this template**, then select **Create a new repository**.
 3. Choose your personal GitHub account as the owner. Give the repository a clear name and set it to **Private**.
-4. Create the repository. This produces an independent copy that you own. It does not add you to the Arketype Systems organization.
+4. Create the repository. This produces an independent private copy under your account. It does not add you to the Arketype Systems organization.
 5. Open **Code** in your new repository and copy its HTTPS address.
 
 Then open a terminal or ask your coding agent to run these commands with the address from your repository:
@@ -24,6 +24,8 @@ npm run dev
 ```
 
 Open the local address printed in the terminal, normally `http://localhost:5173`.
+
+The starter is provided under the [MIT License](LICENSE). That license permits you to use, copy, modify, distribute, and commercialize the included source. Arketype Systems retains its copyright in the original starter, while you control your private repository, its access, its history, and the work you add to it.
 
 ## Bring in your Studio work
 
@@ -44,6 +46,8 @@ Do not commit the downloaded handoff or `.arkitect/studio-context/`. These files
 ## Data boundary
 
 All athlete data is stored in IndexedDB inside the current browser profile. The application has no remote database, account system, analytics service, or athlete data API. It does not route data through Arkitect or Arketype infrastructure.
+
+A private GitHub repository protects the source repository. It does not make a later web deployment private. A standard deployment can be reachable by anyone with its address until authentication and access controls are configured. Keep the application local and synthetic until those controls, a coach-owned production database, backups, retention, and deletion are deliberately reviewed.
 
 Browser storage belongs to the device and browser profile. Clearing site data can erase it. Use **Local database → Export full backup** regularly. A full backup is a JSON file. Roster interchange uses CSV.
 

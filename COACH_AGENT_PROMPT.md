@@ -13,7 +13,7 @@ If it exists, read INDEX.md, the original package, handoff metadata, authority g
 
 Treat a current committed manifest and artifacts marked committed as committed authority. Treat superseded artifacts as historical authority. Treat drafts, events, conversations, inventory, limitations, and open questions as important unresolved context that cannot override committed authority by themselves. If no current manifest exists, do not invent one or present draft work as committed. Do not silently repair, reinterpret, average, or replace any coaching decision. Follow the exported authority guidance when sources disagree. Explain conflicts or missing implementation detail and ask me before choosing. Never commit the Studio context or copy private context into tests, fixtures, screenshots, public documentation, prompts sent to remote services, or application output.
 
-If the Studio context is absent, tell me to download my authenticated handoff JSON and run:
+If the Studio context is absent, first determine whether this session is running in a GitHub Codespace or in a local clone on my device. In a Codespace, do not ask me to upload or import the Studio handoff. State that the remote fallback will use the generic starter with synthetic data and that Studio import is deferred until I open a local clone. In a local clone, tell me to download my authenticated handoff JSON and run:
 
 npm run studio:import -- ~/Downloads/arkitect-studio-handoff.json
 
