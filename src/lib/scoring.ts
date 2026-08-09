@@ -1,7 +1,8 @@
-import type { Measurement, MetricScore, MetricStandard, StandardsVersion } from './types'
+import { bandsForMetric, resolveStandardsProfile } from './standards'
+import type { Athlete, Measurement, MetricScore, MetricStandard, ScoreBand, StandardsProfile, StandardsVersion } from './types'
 
-export function scoreMetric(metric: MetricStandard, value: number): MetricScore {
-  const band = metric.bands.find((candidate) => {
+export function scoreMetric(metric: MetricStandard, value: number, bands: ScoreBand[] = metric.bands): MetricScore {
+  const band = bands.find((candidate) => {
     const aboveMin = candidate.min === undefined || value >= candidate.min
     const belowMax = candidate.max === undefined || value < candidate.max
     return aboveMin && belowMax
@@ -10,17 +11,19 @@ export function scoreMetric(metric: MetricStandard, value: number): MetricScore 
   return { metric, value, points: band.points, band }
 }
 
-export function scoreAssessment(version: StandardsVersion, measurements: Measurement[], athleteId: string) {
+export function scoreAssessment(version: StandardsVersion, measurements: Measurement[], athleteId: string, athlete?: Athlete, assessmentDate = new Date().toISOString().slice(0, 10), profileOverride?: StandardsProfile) {
+  const profile = profileOverride ?? (athlete ? resolveStandardsProfile(version, athlete, assessmentDate) : version.profiles?.[0])
   const valid = measurements.filter((m) => m.athleteId === athleteId && m.status === 'valid' && m.selectedAttempt !== null)
   const scores = version.metrics.flatMap((metric) => {
     const result = valid.find((m) => m.metricId === metric.id)
-    return result?.selectedAttempt === null || result?.selectedAttempt === undefined || !isMetricValueValid(metric, result.selectedAttempt) ? [] : [scoreMetric(metric, result.selectedAttempt)]
+    const bands = profile ? bandsForMetric(profile, metric.id, metric.bands) : metric.bands
+    return result?.selectedAttempt === null || result?.selectedAttempt === undefined || !isMetricValueValid(metric, result.selectedAttempt) ? [] : [scoreMetric(metric, result.selectedAttempt, bands)]
   })
   const missing = version.metrics.filter((metric) => metric.required && !scores.some((score) => score.metric.id === metric.id)).map((metric) => metric.name)
-  if (missing.length) return { complete: false as const, overall: null, scores, missing, standardsVersion: version.version }
-  const totalWeight = scores.reduce((sum, score) => sum + score.metric.weight, 0)
-  const overall = Math.round(scores.reduce((sum, score) => sum + score.points * score.metric.weight, 0) / totalWeight)
-  return { complete: true as const, overall, scores, missing: [], standardsVersion: version.version }
+  const maxPoints = version.metrics.length * 4
+  if (missing.length) return { complete: false as const, overall: null, maxPoints, scores, missing, standardsVersion: version.version, profile }
+  const overall = scores.reduce((sum, score) => sum + score.points, 0)
+  return { complete: true as const, overall, maxPoints, scores, missing: [], standardsVersion: version.version, profile }
 }
 
 export function bestAttempt(metric: MetricStandard, attempts: Array<number | null>): number | null {

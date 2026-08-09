@@ -1,6 +1,5 @@
 import Dexie, { type EntityTable } from 'dexie'
-import { STARTER_STANDARDS } from './standards'
-import { validateStandardsVersion } from './standards'
+import { resolveStandardsProfile, STARTER_STANDARDS, validateStandardsVersion } from './standards'
 import { SYNTHETIC_ATHLETES, SYNTHETIC_MEASUREMENTS, SYNTHETIC_SESSIONS } from './seed'
 import type { AppSetting, Athlete, AssessmentSession, ImportRecord, Measurement, StandardsVersion } from './types'
 
@@ -9,6 +8,21 @@ export class FieldhouseDatabase extends Dexie {
   constructor(name = 'fieldhouse-assessment') {
     super(name)
     this.version(1).stores({ athletes: 'id, lastName, sport, group, &[firstName+lastName]', sessions: 'id, date, status, *athleteIds', measurements: 'id, sessionId, athleteId, metricId, [sessionId+athleteId+metricId]', standards: 'id, version', imports: 'id, importedAt', settings: 'key' })
+    this.version(2).stores({ athletes: 'id, lastName, sport, group, sex, grade, &[firstName+lastName]', sessions: 'id, date, status, *athleteIds', measurements: 'id, sessionId, athleteId, metricId, [sessionId+athleteId+metricId]', standards: 'id, version', imports: 'id, importedAt', settings: 'key' }).upgrade(async (transaction) => {
+      await transaction.table('athletes').toCollection().modify((athlete: Partial<Athlete>) => {
+        athlete.sex ??= 'unspecified'; athlete.dateOfBirth ??= ''; athlete.grade ??= ''; athlete.sports = athlete.sports?.length ? athlete.sports : athlete.sport ? [athlete.sport] : []; athlete.positions = athlete.positions?.length ? athlete.positions : athlete.position ? [athlete.position] : []
+      })
+      await transaction.table('standards').toCollection().modify((version: Partial<StandardsVersion>) => {
+        for (const metric of version.metrics ?? []) {
+          const ordered = [...metric.bands].sort((a, b) => (a.min ?? Number.NEGATIVE_INFINITY) - (b.min ?? Number.NEGATIVE_INFINITY))
+          ordered.forEach((band, index) => { band.points = metric.direction === 'higher' ? index : 4 - index })
+        }
+        if (!version.profiles?.length && version.metrics?.length) version.profiles = [{ id: 'profile-general', name: 'General migrated profile', priority: 0, audience: { sexes: [], grades: [], sports: [], positions: [] }, bandsByMetric: Object.fromEntries(version.metrics.map((metric) => [metric.id, structuredClone(metric.bands)])) }]
+      })
+      await transaction.table('standards').put(structuredClone(STARTER_STANDARDS))
+      const athletes = await transaction.table('athletes').toArray() as Athlete[]; const standards = await transaction.table('standards').toArray() as StandardsVersion[]
+      await transaction.table('sessions').toCollection().modify((session: AssessmentSession) => { if (session.profileIdsByAthlete) return; const version = standards.find((item) => item.id === session.standardsVersionId); if (!version) return; session.profileIdsByAthlete = Object.fromEntries(session.athleteIds.flatMap((id) => { const athlete = athletes.find((item) => item.id === id); return athlete ? [[id, resolveStandardsProfile(version, athlete, session.date).id]] : [] })) })
+    })
   }
 }
 
@@ -32,7 +46,23 @@ export async function resetDemo(database = db) {
   await ensureSeeded(database)
 }
 
-type BackupPayload = { formatVersion: 1; athletes: Athlete[]; sessions: AssessmentSession[]; measurements: Measurement[]; standards: StandardsVersion[]; imports?: ImportRecord[] }
+type BackupPayload = { formatVersion: 2; athletes: Athlete[]; sessions: AssessmentSession[]; measurements: Measurement[]; standards: StandardsVersion[]; imports?: ImportRecord[] }
+
+function normalizeAthlete(athlete: Athlete): Athlete {
+  return { ...athlete, sex: athlete.sex ?? 'unspecified', dateOfBirth: athlete.dateOfBirth ?? '', grade: athlete.grade ?? '', sports: athlete.sports?.length ? athlete.sports : athlete.sport ? [athlete.sport] : [], positions: athlete.positions?.length ? athlete.positions : athlete.position ? [athlete.position] : [] }
+}
+
+function normalizeStandard(version: StandardsVersion): StandardsVersion {
+  const normalized = structuredClone(version)
+  if (!normalized.profiles?.length) {
+    for (const metric of normalized.metrics) {
+      const ordered = [...metric.bands].sort((a, b) => (a.min ?? Number.NEGATIVE_INFINITY) - (b.min ?? Number.NEGATIVE_INFINITY))
+      ordered.forEach((band, index) => { band.points = metric.direction === 'higher' ? index : 4 - index })
+    }
+    normalized.profiles = [{ id: 'profile-general', name: 'General migrated profile', priority: 0, audience: { sexes: [], grades: [], sports: [], positions: [] }, bandsByMetric: Object.fromEntries(normalized.metrics.map((metric) => [metric.id, structuredClone(metric.bands)])) }]
+  }
+  return normalized
+}
 
 function uniqueIds(records: Array<{ id: string }>, label: string) {
   const ids = records.map((record) => record.id)
@@ -43,17 +73,23 @@ function uniqueIds(records: Array<{ id: string }>, label: string) {
 
 export function validateBackup(payload: unknown): BackupPayload {
   if (!payload || typeof payload !== 'object') throw new Error('Backup validation failed: expected a JSON object.')
-  const candidate = payload as Partial<BackupPayload>
-  if (candidate.formatVersion !== 1) throw new Error('Backup validation failed: unsupported format version.')
+  const candidate = payload as Omit<Partial<BackupPayload>, 'formatVersion'> & { formatVersion?: number }
+  if (candidate.formatVersion !== 1 && candidate.formatVersion !== 2) throw new Error('Backup validation failed: unsupported format version.')
   if (![candidate.athletes, candidate.sessions, candidate.measurements, candidate.standards].every(Array.isArray)) throw new Error('Backup validation failed: required record arrays are missing.')
-  const athletes = candidate.athletes!; const sessions = candidate.sessions!; const measurements = candidate.measurements!; const standards = candidate.standards!; const imports = Array.isArray(candidate.imports) ? candidate.imports : []
+  const athletes = candidate.athletes!.map(normalizeAthlete); const measurements = candidate.measurements!; const standards = candidate.standards!.map(normalizeStandard); const imports = Array.isArray(candidate.imports) ? candidate.imports : []
+  const sessions = candidate.sessions!.map((session) => {
+    if (session.profileIdsByAthlete) return session
+    const version = standards.find((item) => item.id === session.standardsVersionId)
+    if (!version) return session
+    return { ...session, profileIdsByAthlete: Object.fromEntries(session.athleteIds.flatMap((id) => { const athlete = athletes.find((item) => item.id === id); return athlete ? [[id, resolveStandardsProfile(version, athlete, session.date).id]] : [] })) }
+  })
   const athleteIds = uniqueIds(athletes, 'athlete'); const sessionIds = uniqueIds(sessions, 'session'); uniqueIds(measurements, 'measurement'); const standardIds = uniqueIds(standards, 'standard'); if (imports.length) uniqueIds(imports, 'import record')
   if (sessions.some((session) => { const version = standards.find((item) => item.id === session.standardsVersionId); const versionMetricIds = new Set(version?.metrics.map((metric) => metric.id) ?? []); return !standardIds.has(session.standardsVersionId) || !Array.isArray(session.athleteIds) || session.athleteIds.some((id) => !athleteIds.has(id)) || !Array.isArray(session.metricIds) || session.metricIds.some((id) => !versionMetricIds.has(id)) })) throw new Error('Backup validation failed: a session references a missing athlete, metric, or standards version.')
   const measurementKeys = measurements.map((measurement) => `${measurement.sessionId}::${measurement.athleteId}::${measurement.metricId}`)
   if (new Set(measurementKeys).size !== measurementKeys.length) throw new Error('Backup validation failed: duplicate session, athlete, and metric measurement mapping.')
   if (measurements.some((measurement) => { const session = sessions.find((item) => item.id === measurement.sessionId); return !sessionIds.has(measurement.sessionId) || !athleteIds.has(measurement.athleteId) || !Array.isArray(measurement.attempts) || !session?.athleteIds.includes(measurement.athleteId) || !session.metricIds.includes(measurement.metricId) })) throw new Error('Backup validation failed: a measurement references a missing or unrelated session, athlete, metric, or attempts list.')
   for (const version of standards) { const errors = validateStandardsVersion(version); if (errors.length) throw new Error(`Backup validation failed: ${errors.join(' ')}`) }
-  return { formatVersion: 1, athletes, sessions, measurements, standards, imports }
+  return { formatVersion: 2, athletes, sessions, measurements, standards, imports }
 }
 
 export async function restoreBackup(payload: unknown, database = db) {

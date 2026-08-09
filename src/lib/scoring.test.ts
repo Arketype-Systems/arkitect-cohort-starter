@@ -8,15 +8,15 @@ const measurement = (athleteId: string, metricId: string, value: number): Measur
 
 describe('versioned deterministic scoring', () => {
   it('scores higher-is-better and exact half-open boundaries', () => {
-    expect(scoreMetric(metric('vertical-jump'), 17.99).points).toBe(20)
-    expect(scoreMetric(metric('vertical-jump'), 18).points).toBe(40)
-    expect(scoreMetric(metric('vertical-jump'), 30).points).toBe(100)
+    expect(scoreMetric(metric('vertical-jump'), 17.99).points).toBe(0)
+    expect(scoreMetric(metric('vertical-jump'), 18).points).toBe(1)
+    expect(scoreMetric(metric('vertical-jump'), 30).points).toBe(4)
     expect(bestAttempt(metric('vertical-jump'), [24, 26, 25])).toBe(26)
   })
   it('scores lower-is-better and exact boundaries in the correct direction', () => {
-    expect(scoreMetric(metric('ten-yard'), 1.64).points).toBe(100)
-    expect(scoreMetric(metric('ten-yard'), 1.65).points).toBe(80)
-    expect(scoreMetric(metric('ten-yard'), 2).points).toBe(20)
+    expect(scoreMetric(metric('ten-yard'), 1.64).points).toBe(4)
+    expect(scoreMetric(metric('ten-yard'), 1.65).points).toBe(3)
+    expect(scoreMetric(metric('ten-yard'), 2).points).toBe(0)
     expect(bestAttempt(metric('ten-yard'), [1.82, 1.76])).toBe(1.76)
   })
   it('uses metric-specific validation ranges', () => {
@@ -35,7 +35,7 @@ describe('versioned deterministic scoring', () => {
     const exceptional: Record<string, number> = { 'vertical-jump': 30, 'broad-jump': 114, 'ten-yard': 1, 'pro-agility': 4, 'bench-reps': 20 }
     const a = STARTER_STANDARDS.metrics.map((item) => measurement('ath-a', item.id, exceptional[item.id]))
     const b = STARTER_STANDARDS.metrics.slice(0, 4).map((item) => measurement('ath-b', item.id, item.direction === 'higher' ? 1 : 100))
-    expect(scoreAssessment(STARTER_STANDARDS, [...a, ...b], 'ath-a').overall).toBe(100)
+    expect(scoreAssessment(STARTER_STANDARDS, [...a, ...b], 'ath-a').overall).toBe(20)
     expect(scoreAssessment(STARTER_STANDARDS, [...a, ...b], 'ath-b').overall).toBeNull()
   })
 })
