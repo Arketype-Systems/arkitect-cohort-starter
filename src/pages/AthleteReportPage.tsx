@@ -1,0 +1,23 @@
+import { ArrowLeft, Download, Printer, TrendingDown, TrendingUp } from 'lucide-react'
+import { Link, useParams } from 'react-router-dom'
+import { EmptyState, Notice, ScoreBadge } from '../components/ui'
+import { downloadText } from '../lib/csv'
+import { deriveAthleteReport, reportToCsv } from '../lib/report'
+import { useData } from '../lib/useData'
+import { displayDate } from '../lib/utils'
+
+export default function AthleteReportPage() {
+  const { athleteId } = useParams(); const { athletes, sessions, measurements, standards } = useData(); const athlete = athletes.find((a) => a.id === athleteId); const version = standards[0]
+  if (!athlete || !version) return <div className="page"><EmptyState title="Report not found">The athlete or scoring standard is unavailable.</EmptyState></div>
+  const report = deriveAthleteReport(athlete, sessions, measurements, version)
+  return <div className="page report-page"><div className="report-toolbar"><Link className="back-link" to="/reporting"><ArrowLeft size={16} />Reporting</Link><div><button className="button secondary" onClick={() => downloadText(`${athlete.firstName}-${athlete.lastName}-report.csv`, reportToCsv(report))}><Download size={17} />CSV</button><button className="button primary" onClick={() => window.print()}><Printer size={17} />Print</button></div></div>
+    <article className="report-canvas"><header className="report-header"><div><p className="report-brand">FIELDHOUSE / PERFORMANCE REPORT</p><h1>{athlete.firstName} {athlete.lastName}</h1><p>{athlete.sport} · {athlete.position} · {athlete.group}</p></div><div className="report-meta"><span>Assessment</span><strong>{displayDate(report.latestSession?.date)}</strong><span>Standard</span><strong>{version.name} · v{version.version}</strong></div></header>
+      {!report.complete && <Notice tone="warning"><strong>Incomplete assessment.</strong> An overall score is intentionally unavailable. Missing required metrics: {report.missing.join(', ') || 'No published assessment'}.</Notice>}
+      <section className="report-hero"><ScoreBadge score={report.overall} label="Overall score" /><div><p className="eyebrow">Assessment summary</p><h2>{report.complete ? 'A clear starting point for the next training block.' : 'Complete the required battery before interpreting a total.'}</h2><p>Every score on this report uses the synthetic, editable starter standard version {version.version}. These bands are not validated population norms.</p></div></section>
+      <section className="report-section"><div className="section-heading"><div><p className="eyebrow">Performance profile</p><h2>Metric detail</h2></div></div><div className="report-metrics">{report.scores.map((score) => <div key={score.metric.id}><div className="metric-result"><span>{score.metric.name}</span><strong>{score.value} <small>{score.metric.unit}</small></strong></div><div className="score-track"><span style={{ width: `${score.points}%`, background: score.band.color }} /></div><div className="metric-caption"><strong>{score.points} · {score.band.label}</strong><span>{score.band.meaning}</span></div></div>)}</div></section>
+      <div className="report-columns"><section className="report-section"><div className="insight-title good"><TrendingUp /><div><p className="eyebrow">Strengths</p><h2>Protect and progress</h2></div></div>{report.strengths.map((s) => <div className="insight-item" key={s.metric.id}><strong>{s.metric.shortName}</strong><span>{s.band.meaning}</span></div>)}</section><section className="report-section"><div className="insight-title attention"><TrendingDown /><div><p className="eyebrow">Priorities</p><h2>Direct the next block</h2></div></div>{report.priorities.map((s) => <div className="insight-item" key={s.metric.id}><strong>{s.metric.shortName}</strong><span>{s.band.meaning}</span></div>)}</section></div>
+      <section className="report-section"><div className="section-heading"><div><p className="eyebrow">Trend context</p><h2>Published assessment history</h2></div></div>{report.sessions.length ? <div className="trend-line">{[...report.sessions].reverse().map((s) => <div key={s.id}><span className="trend-dot" /><strong>{displayDate(s.date)}</strong><small>{s.name}</small></div>)}</div> : <p>No published trend data is available.</p>}</section>
+      <footer>Generated locally on this device · Athlete ID {athlete.id} · Standards version {version.version}</footer>
+    </article>
+  </div>
+}

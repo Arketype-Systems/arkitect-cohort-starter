@@ -1,0 +1,19 @@
+import { ArrowRight, CheckCircle2, ClipboardCheck, Clock3, Users } from 'lucide-react'
+import { Link } from 'react-router-dom'
+import { PageHeader, Progress, StatusPill } from '../components/ui'
+import { useData } from '../lib/useData'
+import { displayDate } from '../lib/utils'
+
+export default function DashboardPage() {
+  const { athletes, sessions, measurements } = useData()
+  const recent = [...sessions].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 4)
+  const incomplete = sessions.filter((s) => s.status !== 'published')
+  const published = sessions.filter((s) => s.status === 'published').length
+  return <div className="page"><PageHeader eyebrow="Overview" title="Good evening, Coach" description="Your assessment work is saved locally and ready for tomorrow’s next session." actions={<Link className="button primary" to="/testing/new">New assessment</Link>} />
+    <section className="stat-grid"><div className="stat-card"><Users /><span>Active roster</span><strong>{athletes.length}</strong><small>Synthetic athletes</small></div><div className="stat-card"><ClipboardCheck /><span>Published sessions</span><strong>{published}</strong><small>Ready for reporting</small></div><div className="stat-card"><Clock3 /><span>Needs attention</span><strong>{incomplete.length}</strong><small>Draft or in progress</small></div><div className="stat-card"><CheckCircle2 /><span>Captured results</span><strong>{measurements.length}</strong><small>Saved in this browser</small></div></section>
+    <div className="dashboard-grid"><section className="panel"><div className="section-heading"><div><p className="eyebrow">Continue working</p><h2>Incomplete assessments</h2></div><Link to="/testing">View all</Link></div>{incomplete.length ? <div className="work-list">{incomplete.map((session) => { const captured = measurements.filter((m) => m.sessionId === session.id && m.selectedAttempt !== null).length; const total = session.athleteIds.length * session.metricIds.length; return <div className="work-item" key={session.id}><div className="work-icon"><Clock3 size={20} /></div><div className="work-copy"><strong>{session.name}</strong><span>{displayDate(session.date)} · {session.athleteIds.length} athletes</span><Progress value={captured} max={total} /></div><div className="work-status"><span>{captured} of {total}</span><Link className="icon-link" aria-label={`Continue ${session.name}`} to={`/testing/${session.id}/live`}><ArrowRight /></Link></div></div>})}</div> : <p className="muted">All sessions are published.</p>}</section>
+      <aside className="panel quick-start"><p className="eyebrow">Next actions</p><h2>Keep the work moving</h2><Link to="/athletes"><span>1</span><div><strong>Review your roster</strong><small>Search, filter, and add athletes.</small></div><ArrowRight /></Link><Link to="/testing/new"><span>2</span><div><strong>Start a testing session</strong><small>Select a battery and roster.</small></div><ArrowRight /></Link><Link to="/reporting"><span>3</span><div><strong>Open athlete reports</strong><small>Print or export published results.</small></div><ArrowRight /></Link></aside>
+    </div>
+    <section className="panel"><div className="section-heading"><div><p className="eyebrow">Assessment log</p><h2>Recent sessions</h2></div></div><div className="table-scroll"><table><thead><tr><th>Session</th><th>Date</th><th>Roster</th><th>Standard</th><th>Status</th><th /></tr></thead><tbody>{recent.map((s) => <tr key={s.id}><td><strong>{s.name}</strong></td><td>{displayDate(s.date)}</td><td>{s.athleteIds.length} athletes</td><td>Starter v1.0.0</td><td><StatusPill tone={s.status === 'published' ? 'good' : 'warning'}>{s.status.replace('_', ' ')}</StatusPill></td><td><Link to={s.status === 'published' ? `/testing/${s.id}/review` : `/testing/${s.id}/live`}>Open</Link></td></tr>)}</tbody></table></div></section>
+  </div>
+}

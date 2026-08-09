@@ -1,0 +1,16 @@
+import { Route, Routes } from 'react-router-dom'
+import Shell from './components/Shell'
+import DashboardPage from './pages/DashboardPage'
+import AthletesPage from './pages/AthletesPage'
+import AthletePage from './pages/AthletePage'
+import TestingPage from './pages/TestingPage'
+import NewSessionPage from './pages/NewSessionPage'
+import LiveTestingPage from './pages/LiveTestingPage'
+import ReviewSessionPage from './pages/ReviewSessionPage'
+import DatabasePage from './pages/DatabasePage'
+import StandardsPage from './pages/StandardsPage'
+import ReportingPage from './pages/ReportingPage'
+import AthleteReportPage from './pages/AthleteReportPage'
+import NotFoundPage from './pages/NotFoundPage'
+
+export default function App() { return <Routes><Route element={<Shell />}><Route index element={<DashboardPage />} /><Route path="athletes" element={<AthletesPage />} /><Route path="athletes/:athleteId" element={<AthletePage />} /><Route path="testing" element={<TestingPage />} /><Route path="testing/new" element={<NewSessionPage />} /><Route path="testing/:sessionId/live" element={<LiveTestingPage />} /><Route path="testing/:sessionId/review" element={<ReviewSessionPage />} /><Route path="database" element={<DatabasePage />} /><Route path="standards" element={<StandardsPage />} /><Route path="reporting" element={<ReportingPage />} /><Route path="reporting/:athleteId" element={<AthleteReportPage />} /><Route path="*" element={<NotFoundPage />} /></Route></Routes> }
