@@ -4,10 +4,10 @@ import { Link, useNavigate } from 'react-router-dom'
 import { PageHeader } from '../components/ui'
 import { db } from '../lib/db'
 import { useData } from '../lib/useData'
-import { initials } from '../lib/utils'
+import { initials, localISODate } from '../lib/utils'
 
 export default function NewSessionPage() {
-  const { athletes, standards } = useData(); const navigate = useNavigate(); const version = standards[0]; const [name, setName] = useState(''); const [date, setDate] = useState(new Date().toISOString().slice(0, 10)); const [selectedAthletes, setSelectedAthletes] = useState<string[]>([]); const [selectedMetrics, setSelectedMetrics] = useState<string[]>(version?.metrics.map((m) => m.id) ?? [])
+  const { athletes, standards } = useData(); const navigate = useNavigate(); const version = standards[0]; const [name, setName] = useState(''); const [date, setDate] = useState(localISODate()); const [selectedAthletes, setSelectedAthletes] = useState<string[]>([]); const [selectedMetrics, setSelectedMetrics] = useState<string[]>(version?.metrics.map((m) => m.id) ?? [])
   const toggle = (list: string[], value: string, set: (next: string[]) => void) => set(list.includes(value) ? list.filter((id) => id !== value) : [...list, value])
   async function create() { if (!version || !name.trim() || !selectedAthletes.length || !selectedMetrics.length) return; const id = crypto.randomUUID(); const now = new Date().toISOString(); await db.sessions.add({ id, name: name.trim(), date, athleteIds: selectedAthletes, metricIds: selectedMetrics, standardsVersionId: version.id, status: 'in_progress', createdAt: now, updatedAt: now }); navigate(`/testing/${id}/live`) }
   return <div className="page"><Link className="back-link" to="/testing"><ArrowLeft size={16} />Testing</Link><PageHeader eyebrow="Session setup" title="New assessment" description="Choose the battery and athletes before opening live intake." />

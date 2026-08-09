@@ -10,7 +10,7 @@ import { initials } from '../lib/utils'
 
 export default function LiveTestingPage() {
   const { sessionId } = useParams(); const navigate = useNavigate(); const { athletes, sessions, measurements, standards } = useData(); const session = sessions.find((s) => s.id === sessionId); const version = standards.find((s) => s.id === session?.standardsVersionId)
-  const roster = athletes.filter((a) => session?.athleteIds.includes(a.id)); const metrics = version?.metrics.filter((m) => session?.metricIds.includes(m.id)) ?? []
+  const roster = useMemo(() => athletes.filter((a) => session?.athleteIds.includes(a.id)), [athletes, session]); const metrics = useMemo(() => version?.metrics.filter((m) => session?.metricIds.includes(m.id)) ?? [], [version, session])
   const [athleteId, setAthleteId] = useState(''); const [metricId, setMetricId] = useState(''); const [saveState, setSaveState] = useState('Saved');
   useEffect(() => { if (!athleteId && roster[0]) setAthleteId(roster[0].id); if (!metricId && metrics[0]) setMetricId(metrics[0].id) }, [athleteId, metricId, roster, metrics])
   const athlete = roster.find((a) => a.id === athleteId); const metric = metrics.find((m) => m.id === metricId); const current = measurements.find((m) => m.sessionId === sessionId && m.athleteId === athleteId && m.metricId === metricId)
