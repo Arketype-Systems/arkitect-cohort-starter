@@ -17,7 +17,7 @@ const insightLinks = [
 ]
 function NavGroup({ links, close }: { links: typeof primaryLinks; close: () => void }) { return <>{links.map(({ to, label, icon: Icon, end }) => <NavLink key={to} to={to} end={end} onClick={close}><Icon size={19} /><span>{label}</span></NavLink>)}</> }
 export default function Shell() {
-  const [open, setOpen] = useState(false); const brand = useBrandSettings(); const style = { '--green': brand.primaryColor, '--green-dark': brand.primaryColor, '--lime': brand.accentColor, '--ink': brand.inkColor, '--body-font': brand.bodyFont, '--display-font': brand.displayFont } as CSSProperties
+  const [open, setOpen] = useState(false); const brand = useBrandSettings(); const style = { '--green': brand.primaryColor, '--green-dark': brand.primaryColor, '--lime': brand.accentColor, '--ink': brand.inkColor, '--brand-primary': brand.primaryColor, '--brand-accent': brand.accentColor, '--brand-shell': brand.inkColor, '--body-font': brand.bodyFont, '--display-font': brand.displayFont } as CSSProperties
   return <div className={`app-shell brand-${brand.direction}`} style={style}>
     <aside className={`sidebar ${open ? 'open' : ''}`}><div className="brand">{brand.logoDataUrl ? <img className="brand-logo" src={brand.logoDataUrl} alt="" /> : <span className="brand-mark"><Radar size={19} /></span>}<div><strong>{brand.organizationName}</strong><small>{brand.productName}</small></div><button className="mobile-close icon-button" onClick={() => setOpen(false)} aria-label="Close navigation"><X /></button></div>
       <nav><NavGroup links={primaryLinks} close={() => setOpen(false)} /><div className="nav-break" /><NavGroup links={insightLinks} close={() => setOpen(false)} /></nav>
