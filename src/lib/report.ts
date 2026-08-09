@@ -2,7 +2,20 @@ import type { Athlete, AthleteReport, AssessmentSession, Measurement, StandardsV
 import { scoreAssessment } from './scoring'
 import { resolveStandardsProfile } from './standards'
 
-export function deriveAthleteReport(athlete: Athlete, sessions: AssessmentSession[], measurements: Measurement[], version: StandardsVersion): AthleteReport {
+export function cohortPercentile(value: number, peerValues: number[], direction: 'higher' | 'lower'): number | null {
+  const values = peerValues.filter(Number.isFinite)
+  if (values.length < 2) return null
+  const favorable = values.filter((peer) => direction === 'higher' ? peer < value : peer > value).length
+  const tied = values.filter((peer) => peer === value).length
+  return Math.round((favorable + tied * .5) / values.length * 100)
+}
+
+function latestPeerValues(profileId: string, metricId: string, sessions: AssessmentSession[], measurements: Measurement[], versionId: string): number[] {
+  const peerIds = [...new Set(sessions.filter((session) => session.status === 'published' && session.standardsVersionId === versionId && Object.values(session.profileIdsByAthlete ?? {}).includes(profileId)).flatMap((session) => session.athleteIds.filter((athleteId) => session.profileIdsByAthlete?.[athleteId] === profileId)))]
+  return peerIds.flatMap((athleteId) => { const session = sessions.filter((item) => item.status === 'published' && item.standardsVersionId === versionId && item.profileIdsByAthlete?.[athleteId] === profileId && item.metricIds.includes(metricId)).sort((a, b) => b.date.localeCompare(a.date) || (b.publishedAt ?? b.updatedAt).localeCompare(a.publishedAt ?? a.updatedAt))[0]; if (!session) return []; const result = measurements.find((measurement) => measurement.sessionId === session.id && measurement.athleteId === athleteId && measurement.metricId === metricId && measurement.status === 'valid' && measurement.selectedAttempt !== null); return result?.selectedAttempt === null || result?.selectedAttempt === undefined ? [] : [result.selectedAttempt] })
+}
+
+export function deriveAthleteReport(athlete: Athlete, sessions: AssessmentSession[], measurements: Measurement[], version: StandardsVersion, allAthletes: Athlete[] = [athlete]): AthleteReport {
   const athleteSessions = sessions.filter((session) => session.athleteIds.includes(athlete.id) && session.status === 'published').sort((a, b) => b.date.localeCompare(a.date) || (b.publishedAt ?? b.updatedAt).localeCompare(a.publishedAt ?? a.updatedAt))
   const latestSession = athleteSessions[0]
   const latestMeasurements = latestSession ? measurements.filter((measurement) => measurement.sessionId === latestSession.id && measurement.athleteId === athlete.id) : []
@@ -10,8 +23,10 @@ export function deriveAthleteReport(athlete: Athlete, sessions: AssessmentSessio
   const profile = pinnedProfileId ? version.profiles.find((item) => item.id === pinnedProfileId) : resolveStandardsProfile(version, athlete, latestSession?.date ?? new Date().toISOString().slice(0, 10))
   if (!profile) throw new Error(`Pinned standards profile ${pinnedProfileId} is missing from version ${version.version}.`)
   const result = scoreAssessment(version, latestMeasurements, athlete.id, athlete, latestSession?.date, profile)
-  const ordered = [...result.scores].sort((a, b) => b.points - a.points)
-  return { athlete, version, profile, sessions: athleteSessions, latestSession, scores: result.scores, overall: result.overall, maxPoints: result.maxPoints, complete: result.complete, missing: result.missing, strengths: ordered.slice(0, 2), priorities: ordered.slice(-2).reverse() }
+  const scores = result.scores.map((score) => { const peers = latestPeerValues(profile.id, score.metric.id, sessions, measurements, version.id); const percentile = allAthletes.length > 1 ? cohortPercentile(score.value, peers, score.metric.direction) : null; return { ...score, percentile: percentile ?? undefined, cohortSize: percentile === null ? undefined : peers.length } })
+  const ordered = [...scores].sort((a, b) => (b.percentile ?? b.points * 25) - (a.percentile ?? a.points * 25))
+  const percentiles = scores.flatMap((score) => score.percentile === undefined ? [] : [score.percentile])
+  return { athlete, version, profile, sessions: athleteSessions, latestSession, scores, overall: result.overall, maxPoints: result.maxPoints, complete: result.complete, missing: result.missing, strengths: ordered.slice(0, 2), priorities: ordered.slice(-2).reverse(), percentileAverage: percentiles.length ? Math.round(percentiles.reduce((sum, value) => sum + value, 0) / percentiles.length) : null }
 }
 
 export function reportToCsv(report: AthleteReport) {
@@ -25,6 +40,4 @@ export function resolveReportVersion(athleteId: string, sessions: AssessmentSess
   return versions.find((version) => version.id === latest?.standardsVersionId)
 }
 
-export function latestStandardsVersion(versions: StandardsVersion[]): StandardsVersion | undefined {
-  return [...versions].sort((a, b) => b.effectiveDate.localeCompare(a.effectiveDate) || b.version.localeCompare(a.version))[0]
-}
+export function latestStandardsVersion(versions: StandardsVersion[]): StandardsVersion | undefined { return [...versions].sort((a, b) => b.effectiveDate.localeCompare(a.effectiveDate) || b.version.localeCompare(a.version, undefined, { numeric: true }))[0] }

@@ -10,7 +10,7 @@ export default function DashboardPage() {
   const recent = [...sessions].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 4)
   const incomplete = sessions.filter((session) => session.status !== 'published')
   const published = sessions.filter((session) => session.status === 'published').length
-  const reports = athletes.flatMap((athlete) => { const version = resolveReportVersion(athlete.id, sessions, standards) ?? latestStandardsVersion(standards); return version ? [deriveAthleteReport(athlete, sessions, measurements, version)] : [] })
+  const reports = athletes.flatMap((athlete) => { const version = resolveReportVersion(athlete.id, sessions, standards) ?? latestStandardsVersion(standards); return version ? [deriveAthleteReport(athlete, sessions, measurements, version, athletes)] : [] })
   const completed = reports.filter((report) => report.overall !== null).sort((a, b) => (b.overall ?? 0) - (a.overall ?? 0))
   const metricGrades = (latestStandardsVersion(standards)?.metrics ?? []).map((metric) => { const scores = completed.flatMap((report) => report.scores.filter((score) => score.metric.id === metric.id)); return { id: metric.id, label: metric.shortName, average: scores.length ? scores.reduce((sum, score) => sum + score.points, 0) / scores.length : 0 } })
   const female = athletes.filter((athlete) => athlete.sex === 'female').length; const male = athletes.filter((athlete) => athlete.sex === 'male').length; const unspecified = athletes.length - female - male
