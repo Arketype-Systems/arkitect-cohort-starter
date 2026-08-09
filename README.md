@@ -63,12 +63,14 @@ Browser storage belongs to the device and browser profile. Clearing site data ca
 ## Everyday workflow
 
 1. Open **Athletes** to review or add the roster.
-2. Add sex, date of birth, grade, training group, and every relevant sport and position. These fields can resolve different standards profiles.
+2. Add sex, date of birth, grade, training group, and every relevant sport and position. These database tags determine which comparison archetype can supply percentile peers. Scoring profiles remain a separate standards concern.
 3. Open **Testing → New session** to select a roster and tests. The matching standards profile is shown for each athlete and pinned to the session.
 4. Use live intake to record attempts. The best valid attempt is selected according to scoring direction and saved automatically.
 5. Open review. Publication remains locked until all required results are valid.
 6. Publish, then open **Reporting** for a three-page individual athlete report with summed points, metric grades, same-archetype percentiles, an adaptive radar chart, strengths, priorities, and history.
-7. Open **Rankings** to compare point totals or raw test results. Filter by standards profile, sex, sport, position, or grade. The Archetypes tab shows the current standards profiles and their assigned athletes.
+7. Open **Database → Comparison archetypes** to define percentile cohorts, primarily by age, sex, and sport. Position, grade, and level are optional refinements. Open **Rankings** to compare point totals or raw test results and filter the leaderboard by those archetypes or athlete tags.
+
+Scoring profiles and comparison archetypes are intentionally separate. A scoring profile controls the versioned 0 through 4 bands pinned to a testing session. A comparison archetype is a persisted database rule that matches athlete tags on each assessment date and controls percentile peers. Editing an archetype updates report and ranking comparisons without changing stored measurements, historical standards versions, or point grades.
 
 ## CSV import
 

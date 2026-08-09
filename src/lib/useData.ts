@@ -7,5 +7,6 @@ export function useData() {
   const measurements = useLiveQuery(() => db.measurements.toArray(), []) ?? []
   const standards = useLiveQuery(() => db.standards.toArray(), []) ?? []
   const imports = useLiveQuery(() => db.imports.orderBy('importedAt').reverse().toArray(), []) ?? []
-  return { athletes, sessions, measurements, standards, imports, ready: standards.length > 0 }
+  const archetypes = useLiveQuery(() => db.archetypes.orderBy('priority').reverse().toArray(), []) ?? []
+  return { athletes, sessions, measurements, standards, imports, archetypes, ready: standards.length > 0 }
 }

@@ -22,7 +22,7 @@ test('live result autosaves to IndexedDB and survives reload', async ({ page }) 
 })
 
 test('required pages have no viewport overflow', async ({ page }, testInfo) => {
-  const routes = ['/', '/athletes', '/testing', '/testing/new', '/testing/session-draft/live', '/testing/session-complete/review', '/database', '/standards', '/reporting', '/reporting/ath-a', '/rankings?tab=leaderboards', '/rankings?tab=archetypes', '/settings']
+  const routes = ['/', '/athletes', '/testing', '/testing/new', '/testing/session-draft/live', '/testing/session-complete/review', '/database', '/standards', '/reporting', '/reporting/ath-a', '/rankings', '/settings']
   for (const route of routes) {
     await page.goto(route)
     await expect(page.locator('body')).toBeVisible()
@@ -35,8 +35,10 @@ test('required pages have no viewport overflow', async ({ page }, testInfo) => {
   await page.screenshot({ path: `screenshots/dashboard-${testInfo.project.name}.png`, fullPage: true })
   await page.goto('/reporting/ath-a')
   await page.screenshot({ path: `screenshots/report-${testInfo.project.name}.png`, fullPage: true })
-  await page.goto('/rankings?tab=leaderboards')
+  await page.goto('/rankings')
   await page.screenshot({ path: `screenshots/rankings-${testInfo.project.name}.png`, fullPage: true })
+  await page.goto('/database#archetypes')
+  await page.screenshot({ path: `screenshots/database-${testInfo.project.name}.png`, fullPage: true })
   await page.goto('/settings')
   await page.screenshot({ path: `screenshots/settings-${testInfo.project.name}.png`, fullPage: true })
   await page.goto('/standards')
@@ -233,18 +235,31 @@ test('standards versions connect to session setup and report export and print co
   await expect(page.locator('body')).toHaveAttribute('data-print-invoked', 'true')
 })
 
-test('one-test standards edits version safely and rankings keep URL-stable cohort tabs', async ({ page }) => {
+test('standards stay separate while database archetypes connect to rankings and reports', async ({ page }) => {
   await page.goto('/standards')
   await page.getByRole('tab', { name: /10 yard/ }).click()
   await page.getByRole('button', { name: /Edit this test/ }).click()
   await expect(page.getByRole('heading', { name: /Edit 10 Yard Sprint/ })).toBeVisible()
   await expect(page.locator('.editor-metric')).toHaveCount(1)
   await page.getByRole('button', { name: /Save revision/ }).click()
-  await page.goto('/rankings?tab=leaderboards')
-  await expect(page.getByRole('tab', { name: 'Leaderboards' })).toHaveAttribute('aria-selected', 'true')
-  await page.getByRole('tab', { name: 'Archetypes' }).click()
-  await expect(page).toHaveURL(/tab=archetypes/)
-  await expect(page.getByText('Comparison archetype').first()).toBeVisible()
+  await page.goto('/database#archetypes')
+  await page.getByRole('button', { name: /New archetype/ }).click()
+  await page.getByLabel('Archetype name').fill('Male soccer · ages 16–18')
+  await page.getByLabel('Archetype minimum age').fill('16')
+  await page.getByLabel('Archetype maximum age').fill('18')
+  await page.getByLabel('Archetype sex').selectOption('male')
+  await page.getByLabel('Archetype priority').fill('100')
+  await page.getByLabel('Archetype sports').fill('Soccer')
+  await page.getByRole('button', { name: /Save archetype/ }).click()
+  await expect(page.getByRole('dialog')).toBeHidden()
+  await expect(page.getByRole('heading', { name: 'Male soccer · ages 16–18' })).toBeVisible()
+  await page.reload()
+  await expect(page.getByRole('heading', { name: 'Male soccer · ages 16–18' })).toBeVisible()
+  await page.goto('/rankings')
+  await page.getByLabel('Archetype').selectOption({ label: 'Male soccer · ages 16–18' })
+  await expect(page.getByText('Jordan Ellis')).toBeVisible()
+  await page.goto('/reporting/ath-a')
+  await expect(page.getByText('Male soccer · ages 16–18').first()).toBeVisible()
 })
 
 test('branding persists and changes shell and reports without changing report scores', async ({ page }) => {

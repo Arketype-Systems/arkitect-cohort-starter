@@ -12,7 +12,7 @@ const primaryLinks = [
 ]
 const insightLinks = [
   { to: '/reporting', label: 'Reporting', icon: Activity },
-  { to: '/rankings?tab=leaderboards', label: 'Rankings', icon: Trophy },
+  { to: '/rankings', label: 'Rankings', icon: Trophy },
   { to: '/settings', label: 'Settings', icon: Settings }
 ]
 function NavGroup({ links, close }: { links: typeof primaryLinks; close: () => void }) { return <>{links.map(({ to, label, icon: Icon, end }) => <NavLink key={to} to={to} end={end} onClick={close}><Icon size={19} /><span>{label}</span></NavLink>)}</> }

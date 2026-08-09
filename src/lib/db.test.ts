@@ -16,10 +16,12 @@ describe('IndexedDB persistence mapping', () => {
     const sessions = structuredClone(SYNTHETIC_SESSIONS) as unknown as Array<Record<string, unknown>>
     sessions.forEach((session) => delete session.profileIdsByAthlete)
     const migrated = validateBackup({ formatVersion: 1, athletes, sessions, measurements: SYNTHETIC_MEASUREMENTS, standards })
-    expect(migrated.formatVersion).toBe(2)
+    expect(migrated.formatVersion).toBe(3)
+    expect(migrated.archetypes.length).toBeGreaterThan(0)
     expect(migrated.athletes[0]).toMatchObject({ sex: 'unspecified', sports: ['Soccer'], positions: ['Midfielder'] })
     expect(migrated.standards[0].profiles[0].bandsByMetric['vertical-jump'].map((band) => band.points)).toEqual([0, 1, 2, 3, 4])
     expect(migrated.sessions[0].profileIdsByAthlete?.['ath-a']).toBe('profile-general')
   })
   it('rejects a session pinned to a profile outside its standards version', () => { const sessions = structuredClone(SYNTHETIC_SESSIONS); sessions[0].profileIdsByAthlete = { ...sessions[0].profileIdsByAthlete, 'ath-a': 'missing-profile' }; expect(() => validateBackup({ formatVersion: 2, athletes: SYNTHETIC_ATHLETES, sessions, measurements: SYNTHETIC_MEASUREMENTS, standards: [STARTER_STANDARDS] })).toThrow('pinned profile') })
+  it('rejects corrupted comparison archetypes before replacing data', () => { const archetypes = [{ id: 'bad', name: '', active: true, priority: 10, ageMin: 19, ageMax: 15, sexes: ['invalid'], sports: [], positions: [], grades: [], levels: [], createdAt: new Date().toISOString() }]; expect(() => validateBackup({ formatVersion: 3, athletes: SYNTHETIC_ATHLETES, sessions: SYNTHETIC_SESSIONS, measurements: SYNTHETIC_MEASUREMENTS, standards: [STARTER_STANDARDS], archetypes })).toThrow('archetype has invalid comparison rules') })
 })
