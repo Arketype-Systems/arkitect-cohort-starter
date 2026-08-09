@@ -8,7 +8,7 @@ const links = [
 export default function Shell() {
   const [open, setOpen] = useState(false)
   return <div className="app-shell">
-    <aside className={`sidebar ${open ? 'open' : ''}`}><div className="brand"><span className="brand-mark"><Radar size={19} /></span><div><strong>Fieldhouse</strong><small>Performance assessment</small></div><button className="mobile-close icon-button" onClick={() => setOpen(false)} aria-label="Close navigation"><X /></button></div>
+    <aside className={`sidebar ${open ? 'open' : ''}`}><div className="brand"><span className="brand-mark"><Radar size={19} /></span><div><strong>Fieldhouse</strong><small>Assessment System</small></div><button className="mobile-close icon-button" onClick={() => setOpen(false)} aria-label="Close navigation"><X /></button></div>
       <nav>{links.map(({ to, label, icon: Icon, end }) => <NavLink key={to} to={to} end={end} onClick={() => setOpen(false)}><Icon size={19} /><span>{label}</span></NavLink>)}</nav>
       <div className="data-boundary"><ShieldCheck size={18} /><div><strong>Stored on this device</strong><span>No athlete data is sent to Arkitect or a hosted service.</span></div></div>
     </aside>

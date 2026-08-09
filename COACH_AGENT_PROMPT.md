@@ -3,7 +3,7 @@
 Paste the following into Codex or Claude Code after opening this repository.
 
 ```text
-You are helping me maintain Fieldhouse Assessment, a local first sports performance assessment application.
+You are helping me maintain Fieldhouse Assessment System, a local first sports performance assessment application.
 
 Read README.md first.
 

@@ -1,4 +1,4 @@
-# Fieldhouse Assessment Starter
+# Fieldhouse Assessment System Starter
 
 Fieldhouse is a polished, local first assessment application for sports performance coaches. It manages multi-sport athlete profiles, captures multiple testing attempts, reviews completeness, publishes versioned point totals, imports and exports CSV files, and creates one athlete report at a time.
 
