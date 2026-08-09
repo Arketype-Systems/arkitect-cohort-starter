@@ -17,6 +17,22 @@ npm run dev
 
 Open the local address printed in the terminal, normally `http://localhost:5173`.
 
+## Bring in your Studio work
+
+Download your Studio handoff JSON while signed in to the cohort. Place the downloaded file anywhere on your device, then run this command from the repository:
+
+```bash
+npm run studio:import -- ~/Downloads/arkitect-studio-handoff.json
+```
+
+The command validates the versioned handoff package and writes private local context to `.arkitect/studio-context/`. That directory is ignored by Git. It contains the original package, the committed Assessment System Manifest, every committed workspace artifact, and an `INDEX.md` written for your coding agent.
+
+The importer does not sign in to the cohort, call an Arketype service, or alter your coaching decisions. It only reads the authenticated export you downloaded. Run the command again whenever you download a newer handoff. A successful import replaces the previous local context atomically.
+
+After importing, open this repository with Codex or Claude Code and paste the prompt from [COACH_AGENT_PROMPT.md](COACH_AGENT_PROMPT.md). Your coding agent must read `.arkitect/studio-context/INDEX.md` and every linked file before proposing changes.
+
+Do not commit the downloaded handoff or `.arkitect/studio-context/`. These files can contain private program design, standards decisions, and unresolved Studio work.
+
 ## Data boundary
 
 All athlete data is stored in IndexedDB inside the current browser profile. The application has no remote database, account system, analytics service, or athlete data API. It does not route data through Arkitect or Arketype infrastructure.
@@ -50,6 +66,8 @@ Run every nonbrowser check together with:
 ```bash
 npm run verify
 ```
+
+`npm run verify` also runs a tracked-file privacy scan. The importer has no user-interface changes, so importing Studio context does not require an additional browser test.
 
 The browser suite starts the development server and checks desktop, tablet, and mobile layouts. Install Chromium once if Playwright requests it:
 
@@ -90,6 +108,8 @@ Metric-specific valid ranges are part of each standards version. Live intake aut
 - `src/lib/csv.ts`: CSV parsing, validation, and export
 - `src/lib/report.ts`: one athlete report derivation
 - `src/pages`: real application routes
+- `scripts/studio-handoff.mjs`: versioned, lossless Studio handoff importer
+- `.arkitect/studio-context`: private imported coach context, always ignored by Git
 - `e2e`: browser, complete create-to-report workflow, reload persistence, publication locking, result disposition, and overflow checks
 - `COACH_AGENT_PROMPT.md`: orientation prompt for a coding agent
 
