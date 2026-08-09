@@ -4,13 +4,21 @@ Fieldhouse is a polished, local first assessment application for sports performa
 
 The included athletes, sessions, results, and standards are clearly labeled synthetic examples. No real athlete data or proprietary performance standards are included.
 
-## Start here
+## Create the repository you own
 
-You need Node.js 20 or newer and Git. A coding agent such as Codex or Claude Code can run these commands for you.
+You need a GitHub account, Git, Node.js 20 or newer, and a coding agent such as Codex or Claude Code. Follow the complete [Connect Day guide](CONNECT_DAY_GUIDE.md) when setting this up for the first time.
+
+1. Sign in to GitHub and open the [Arkitect Cohort Starter](https://github.com/Arketype-Systems/arkitect-cohort-starter).
+2. Select **Use this template**, then select **Create a new repository**.
+3. Choose your personal GitHub account as the owner. Give the repository a clear name and set it to **Private**.
+4. Create the repository. This produces an independent copy that you own. It does not add you to the Arketype Systems organization.
+5. Open **Code** in your new repository and copy its HTTPS address.
+
+Then open a terminal or ask your coding agent to run these commands with the address from your repository:
 
 ```bash
-git clone https://github.com/Arketype-Systems/arkitect-cohort-starter.git
-cd arkitect-cohort-starter
+git clone YOUR_PRIVATE_REPOSITORY_URL
+cd YOUR_REPOSITORY_NAME
 npm install
 npm run dev
 ```
