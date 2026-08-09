@@ -67,6 +67,7 @@ Complete this step only from a local clone on your device. If you are using the 
 
 ```bash
 npm run studio:import -- ~/Downloads/arkitect-studio-handoff.json
+npm run studio:status
 ```
 
 Use the actual downloaded filename if your browser changed it. A successful import prints the number of artifact versions and points to:
@@ -77,9 +78,13 @@ Use the actual downloaded filename if your browser changed it. A successful impo
 
 That directory is private, local, and ignored by Git. The importer preserves every active Studio system and every saved version without treating drafts as committed decisions.
 
+The status command reports one of three states. **Ready** means a current committed manifest exists. **Partial** means committed workspace decisions exist without a complete cross-workspace manifest. **Foundation** means no workspace version is currently committed. Partial and Foundation packages remain useful context, but the coding agent must ask before unfinished scoring, reporting, or workflow decisions become application behavior.
+
+Importing makes no network request. Asking Codex or Claude Code to read selected files is a separate disclosure to that provider under your account and its terms. Review the export first. Structured athlete rows are excluded, but coach-entered free text may still be sensitive.
+
 ## 5. Give the repository to your coding agent
 
-Open the repository in Codex or Claude Code. Then paste the prompt from [COACH_AGENT_PROMPT.md](COACH_AGENT_PROMPT.md). If this is the Codespaces fallback, tell the coding agent that it must use the generic starter with synthetic data and must not request or import the Studio handoff.
+Open the repository in Codex or Claude Code. Then paste the prompt from [COACH_AGENT_PROMPT.md](COACH_AGENT_PROMPT.md). Codex is the path demonstrated in the August 9 handoff rehearsal. If this is the Codespaces fallback, tell the coding agent that it must use the generic starter with synthetic data and must not request or import the Studio handoff.
 
 For the first turn, ask the coding agent to orient before editing:
 
@@ -128,5 +133,6 @@ The application works locally before it is hosted. Hosting, a custom domain, aut
 - If GitHub does not show **Use this template**, confirm that you opened the public Arketype Systems starter rather than another coach's copy.
 - If `node` is not found, install the current Node.js long term support release, then reopen the terminal.
 - If the Studio import cannot find the file, drag the downloaded JSON into the terminal after `npm run studio:import -- ` to insert its exact path.
+- If the importer rejects the package, keep the JSON private and continue with the generic starter. Do not bypass validation by asking an agent to inspect the raw package directly during the group call.
 - If the coding agent cannot see Studio context, confirm that `.arkitect/studio-context/INDEX.md` exists and ask it to read that file first.
 - If the local page does not open, keep the terminal running and use the exact address printed after `npm run dev`.
