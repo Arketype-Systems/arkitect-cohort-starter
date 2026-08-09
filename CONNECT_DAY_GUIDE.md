@@ -1,6 +1,6 @@
 # Connect Day Setup
 
-This guide creates a private GitHub repository that you own, starts the assessment application on your device, imports your complete Assessment System Studio work, and gives that context to your coding agent.
+This guide creates a private GitHub repository that you control, starts the assessment application on your device, imports your complete Assessment System Studio work, and gives that context to your coding agent.
 
 The starter stores athlete records only in the current browser profile. Importing Studio context does not send athlete records or Studio work to Arketype. Do not enter real athlete information during the setup walkthrough.
 
@@ -23,7 +23,7 @@ Confirm that you have all four items before the walkthrough begins:
 6. Set the repository visibility to **Private**.
 7. Select **Create repository**.
 
-The new repository is independent from the public starter. You own its source and history. You are not joining the Arketype Systems organization or using an organization seat.
+The new repository is independent from the public starter and lives under your account. You control its access and history. The starter's [MIT License](LICENSE) permits you to use, modify, distribute, and commercialize the included source. Arketype Systems retains its copyright in the original starter. You keep any rights you already hold in your original additions, while copied, employer-owned, or third-party material keeps its existing terms. You are not joining the Arketype Systems organization or using an organization seat.
 
 ## 2. Open your repository on your device
 
@@ -47,7 +47,7 @@ Use this fallback only when Git or Node.js cannot be made ready during the walkt
 4. Wait for the browser workspace to open.
 5. Run `npm install` in its terminal.
 
-The codespace opens the same private repository. It does not create a second application or move ownership away from your GitHub account. GitHub may count the session against your personal Codespaces allowance, so return to a local clone after Connect Day when practical.
+The codespace opens the same private repository. It does not create a second application or move repository control away from your GitHub account. A codespace runs on GitHub's remote infrastructure rather than on your device. During Connect Day, use it only to inspect the generic starter with synthetic data. Do not upload your Studio handoff to the codespace. Import that file later from a local clone on your device. GitHub may count the session against your personal Codespaces allowance.
 
 ## 3. Download your complete Studio handoff
 
@@ -63,7 +63,7 @@ The handoff contains no structured athlete rows. Coach entered notes and convers
 
 ## 4. Import Studio into your private local context
 
-From your repository directory, run:
+Complete this step only from a local clone on your device. If you are using the Codespaces fallback, skip the import during Connect Day. From your local repository directory, run:
 
 ```bash
 npm run studio:import -- ~/Downloads/arkitect-studio-handoff.json
@@ -79,7 +79,7 @@ That directory is private, local, and ignored by Git. The importer preserves eve
 
 ## 5. Give the repository to your coding agent
 
-Open the repository in Codex or Claude Code. Then paste the prompt from [COACH_AGENT_PROMPT.md](COACH_AGENT_PROMPT.md).
+Open the repository in Codex or Claude Code. Then paste the prompt from [COACH_AGENT_PROMPT.md](COACH_AGENT_PROMPT.md). If this is the Codespaces fallback, tell the coding agent that it must use the generic starter with synthetic data and must not request or import the Studio handoff.
 
 For the first turn, ask the coding agent to orient before editing:
 
@@ -121,7 +121,7 @@ The coding agent should explain the changed files and verification results, then
 
 ## What happens after Connect Day
 
-The application works locally before it is hosted. Hosting, a custom domain, authentication, and a remote database are separate decisions. Do not connect real athlete data to a hosted service until you understand who controls the database, access, retention, backup, and deletion.
+The application works locally before it is hosted. Hosting, a custom domain, authentication, and a remote database are separate decisions. A private GitHub repository does not make a deployed website private. A standard deployment can be publicly reachable until access controls are configured. Do not connect real athlete data to a hosted service until you understand who controls the database, access, retention, backup, and deletion.
 
 ## Fast troubleshooting
 
