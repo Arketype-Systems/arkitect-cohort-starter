@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Activity, BarChart3, ClipboardCheck, Database, Dumbbell, Menu, ShieldCheck, Users, X } from 'lucide-react'
+import { Activity, BarChart3, ClipboardCheck, Database, Dumbbell, Menu, Radar, ShieldCheck, Users, X } from 'lucide-react'
 import { NavLink, Outlet } from 'react-router-dom'
 
 const links = [
@@ -8,11 +8,11 @@ const links = [
 export default function Shell() {
   const [open, setOpen] = useState(false)
   return <div className="app-shell">
-    <aside className={`sidebar ${open ? 'open' : ''}`}><div className="brand"><span className="brand-mark">F</span><div><strong>Fieldhouse</strong><small>Assessment starter</small></div><button className="mobile-close icon-button" onClick={() => setOpen(false)} aria-label="Close navigation"><X /></button></div>
+    <aside className={`sidebar ${open ? 'open' : ''}`}><div className="brand"><span className="brand-mark"><Radar size={19} /></span><div><strong>Fieldhouse</strong><small>Performance assessment</small></div><button className="mobile-close icon-button" onClick={() => setOpen(false)} aria-label="Close navigation"><X /></button></div>
       <nav>{links.map(({ to, label, icon: Icon, end }) => <NavLink key={to} to={to} end={end} onClick={() => setOpen(false)}><Icon size={19} /><span>{label}</span></NavLink>)}</nav>
       <div className="data-boundary"><ShieldCheck size={18} /><div><strong>Stored on this device</strong><span>No athlete data is sent to Arkitect or a hosted service.</span></div></div>
     </aside>
     {open && <button className="scrim" aria-label="Close navigation" onClick={() => setOpen(false)} />}
-    <section className="main-column"><div className="topbar"><button className="menu-button icon-button" onClick={() => setOpen(true)} aria-label="Open navigation"><Menu /></button><div className="topbar-title"><span className="status-dot" />Local database ready</div><div className="topbar-meta">Synthetic demo</div></div><main><Outlet /></main></section>
+    <section className="main-column"><div className="topbar"><button className="menu-button icon-button" onClick={() => setOpen(true)} aria-label="Open navigation"><Menu /></button><div className="topbar-title"><span className="status-dot" /><span><b>LOCAL SYSTEM</b> IndexedDB connected</span></div><div className="topbar-readout"><span>STARTER STANDARDS</span><strong>v1.0.0</strong></div><div className="topbar-meta">Synthetic demo</div></div><main><Outlet /></main></section>
   </div>
 }
