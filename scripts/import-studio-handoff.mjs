@@ -15,7 +15,7 @@ if (!input || extra.length > 0 || input === '--help' || input === '-h') {
 
 try {
   const result = await importStudioHandoff({ inputPath: path.resolve(process.cwd(), input), repoRoot })
-  console.log(`Imported ${result.artifactCount} committed Studio artifacts.`)
+  console.log(`Imported ${result.artifactCount} Studio artifact versions.`)
   console.log(`Local context: ${path.relative(repoRoot, result.contextRoot)}/INDEX.md`)
   console.log('This directory is ignored by Git. Ask your coding agent to read it before making changes.')
 } catch (error) {
