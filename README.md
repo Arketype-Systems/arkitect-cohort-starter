@@ -33,7 +33,7 @@ Browser storage belongs to the device and browser profile. Clearing site data ca
 
 ## CSV import
 
-Open **Local database** and download the athlete template. Keep the headers unchanged. Upload the completed file to see header mapping and row validation before importing. Valid rows can be imported while invalid rows remain visible. Matching first and last names are treated as duplicates without regard to capitalization.
+Open **Local database** and download the athlete template. Upload the completed file to see interactive field mapping and row validation before importing. Standard and common column names map automatically. Other headers can be assigned with the mapping controls. Valid rows can be imported while invalid rows remain visible. Matching first and last names are treated as duplicates without regard to capitalization.
 
 ## Build, test, and verify
 
@@ -60,6 +60,7 @@ npx playwright install chromium
 ## Backup, export, and reset
 
 - **Full backup:** Local database → Export full backup.
+- **Full restore:** Local database → Restore full backup. The entire file and every record relationship are validated before any existing data is replaced.
 - **Roster CSV:** Local database → Export roster CSV.
 - **One athlete result CSV:** Reporting → open an athlete → CSV.
 - **Reset:** Local database → Reset demo data. This removes local changes and restores the synthetic demo.
@@ -77,7 +78,9 @@ The included `Editable U.S. S&C Starter Battery` uses five synthetic performance
 - Missing or excluded required results return **Incomplete**. Weight is never redistributed.
 - Reports filter measurements by both athlete ID and session ID. They never borrow another athlete’s result.
 
-Edit and version standards in `src/lib/standards.ts`. Change the version whenever a band, unit, direction, required flag, or weight changes. Update the explicit scoring fixtures in `src/lib/scoring.test.ts` at the same time.
+Use **Standards → Create version** to create an append-only scoring revision. Existing sessions and reports remain attached to their exact original version. The editor rejects weight drift, invalid ranges, band gaps, band overlaps, and points that are reversed for the declared scoring direction. The bundled default remains in `src/lib/standards.ts`; update the explicit fixtures in `src/lib/scoring.test.ts` if a developer intentionally changes that seed.
+
+Metric-specific valid ranges are part of each standards version. Live intake automatically marks an out-of-range selected attempt invalid. Review allows every captured result to be marked Valid, Invalid, or Excluded. Published sessions are locked against further live-entry changes.
 
 ## Repository map
 
@@ -87,7 +90,7 @@ Edit and version standards in `src/lib/standards.ts`. Change the version wheneve
 - `src/lib/csv.ts`: CSV parsing, validation, and export
 - `src/lib/report.ts`: one athlete report derivation
 - `src/pages`: real application routes
-- `e2e`: browser, reload, persistence, and overflow checks
+- `e2e`: browser, complete create-to-report workflow, reload persistence, publication locking, result disposition, and overflow checks
 - `COACH_AGENT_PROMPT.md`: orientation prompt for a coding agent
 
 ## Privacy and production use
