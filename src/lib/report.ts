@@ -6,7 +6,9 @@ export function deriveAthleteReport(athlete: Athlete, sessions: AssessmentSessio
   const athleteSessions = sessions.filter((session) => session.athleteIds.includes(athlete.id) && session.status === 'published').sort((a, b) => b.date.localeCompare(a.date) || (b.publishedAt ?? b.updatedAt).localeCompare(a.publishedAt ?? a.updatedAt))
   const latestSession = athleteSessions[0]
   const latestMeasurements = latestSession ? measurements.filter((measurement) => measurement.sessionId === latestSession.id && measurement.athleteId === athlete.id) : []
-  const profile = version.profiles.find((item) => item.id === latestSession?.profileIdsByAthlete?.[athlete.id]) ?? resolveStandardsProfile(version, athlete, latestSession?.date ?? new Date().toISOString().slice(0, 10))
+  const pinnedProfileId = latestSession?.profileIdsByAthlete?.[athlete.id]
+  const profile = pinnedProfileId ? version.profiles.find((item) => item.id === pinnedProfileId) : resolveStandardsProfile(version, athlete, latestSession?.date ?? new Date().toISOString().slice(0, 10))
+  if (!profile) throw new Error(`Pinned standards profile ${pinnedProfileId} is missing from version ${version.version}.`)
   const result = scoreAssessment(version, latestMeasurements, athlete.id, athlete, latestSession?.date, profile)
   const ordered = [...result.scores].sort((a, b) => b.points - a.points)
   return { athlete, version, profile, sessions: athleteSessions, latestSession, scores: result.scores, overall: result.overall, maxPoints: result.maxPoints, complete: result.complete, missing: result.missing, strengths: ordered.slice(0, 2), priorities: ordered.slice(-2).reverse() }

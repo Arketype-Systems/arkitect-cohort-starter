@@ -91,6 +91,8 @@ export function validateStandardsVersion(version: StandardsVersion): string[] {
   if (!version.name.trim()) errors.push('A standard name is required.')
   if (!version.metrics.length) errors.push('At least one metric is required.')
   if (!version.profiles?.length) errors.push('At least one standards profile is required.')
+  if (new Set(version.metrics.map((metric) => metric.id)).size !== version.metrics.length || version.metrics.some((metric) => !metric.id.trim())) errors.push('Every metric needs a unique nonempty ID.')
+  if (new Set((version.profiles ?? []).map((profile) => profile.id)).size !== (version.profiles ?? []).length || (version.profiles ?? []).some((profile) => !profile.id.trim())) errors.push('Every standards profile needs a unique nonempty ID.')
   if (version.profiles && !version.profiles.some((profile) => !profile.audience.sexes.length && profile.audience.ageMin === undefined && profile.audience.ageMax === undefined && !profile.audience.grades.length && !profile.audience.sports.length && !profile.audience.positions.length)) errors.push('A general fallback standards profile is required.')
   if (version.metrics.reduce((sum, metric) => sum + metric.weight, 0) !== 100) errors.push('Metric weights must total 100 percent.')
   for (const metric of version.metrics) {
@@ -111,6 +113,9 @@ export function validateStandardsVersion(version: StandardsVersion): string[] {
   for (const profile of version.profiles ?? []) {
     if (!profile.name.trim()) errors.push('Every standards profile needs a name.')
     if (!Number.isFinite(profile.priority)) errors.push(`${profile.name} needs a numeric priority.`)
+    if (profile.audience.sexes.some((sex) => !['female', 'male', 'unspecified'].includes(sex))) errors.push(`${profile.name} has an unsupported sex value.`)
+    if (profile.audience.ageMin !== undefined && (!Number.isInteger(profile.audience.ageMin) || profile.audience.ageMin < 0)) errors.push(`${profile.name} needs a nonnegative whole-number minimum age.`)
+    if (profile.audience.ageMax !== undefined && (!Number.isInteger(profile.audience.ageMax) || profile.audience.ageMax < 0)) errors.push(`${profile.name} needs a nonnegative whole-number maximum age.`)
     if (profile.audience.ageMin !== undefined && profile.audience.ageMax !== undefined && profile.audience.ageMin > profile.audience.ageMax) errors.push(`${profile.name} has a reversed age range.`)
   }
   return [...new Set(errors)]

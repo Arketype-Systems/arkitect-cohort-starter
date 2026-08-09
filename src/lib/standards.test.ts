@@ -24,4 +24,5 @@ describe('standards version validation', () => {
     expect(resolveStandardsProfile(version, SYNTHETIC_ATHLETES[1], '2026-08-08').id).toBe('profile-varsity-guard')
     expect(resolveStandardsProfile(version, { ...SYNTHETIC_ATHLETES[1], positions: ['Forward'], position: 'Forward' }, '2026-08-08').id).toBe('profile-female')
   })
+  it('rejects duplicate identities and malformed audience values', () => { const version = structuredClone(STARTER_STANDARDS); version.profiles[1].id = version.profiles[0].id; version.profiles[1].audience.ageMin = -1; version.metrics[1].id = version.metrics[0].id; const errors = validateStandardsVersion(version).join(' '); expect(errors).toContain('unique nonempty ID'); expect(errors).toContain('nonnegative whole-number minimum age') })
 })

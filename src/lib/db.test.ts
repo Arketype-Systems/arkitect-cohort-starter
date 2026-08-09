@@ -21,4 +21,5 @@ describe('IndexedDB persistence mapping', () => {
     expect(migrated.standards[0].profiles[0].bandsByMetric['vertical-jump'].map((band) => band.points)).toEqual([0, 1, 2, 3, 4])
     expect(migrated.sessions[0].profileIdsByAthlete?.['ath-a']).toBe('profile-general')
   })
+  it('rejects a session pinned to a profile outside its standards version', () => { const sessions = structuredClone(SYNTHETIC_SESSIONS); sessions[0].profileIdsByAthlete = { ...sessions[0].profileIdsByAthlete, 'ath-a': 'missing-profile' }; expect(() => validateBackup({ formatVersion: 2, athletes: SYNTHETIC_ATHLETES, sessions, measurements: SYNTHETIC_MEASUREMENTS, standards: [STARTER_STANDARDS] })).toThrow('pinned profile') })
 })
