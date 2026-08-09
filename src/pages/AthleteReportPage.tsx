@@ -2,12 +2,12 @@ import { ArrowLeft, Download, Printer, TrendingDown, TrendingUp } from 'lucide-r
 import { Link, useParams } from 'react-router-dom'
 import { EmptyState, Notice, ScoreBadge } from '../components/ui'
 import { downloadText } from '../lib/csv'
-import { deriveAthleteReport, reportToCsv } from '../lib/report'
+import { deriveAthleteReport, latestStandardsVersion, reportToCsv, resolveReportVersion } from '../lib/report'
 import { useData } from '../lib/useData'
 import { displayDate } from '../lib/utils'
 
 export default function AthleteReportPage() {
-  const { athleteId } = useParams(); const { athletes, sessions, measurements, standards } = useData(); const athlete = athletes.find((a) => a.id === athleteId); const version = standards[0]
+  const { athleteId } = useParams(); const { athletes, sessions, measurements, standards } = useData(); const athlete = athletes.find((a) => a.id === athleteId); const version = athlete ? resolveReportVersion(athlete.id, sessions, standards) ?? latestStandardsVersion(standards) : undefined
   if (!athlete || !version) return <div className="page"><EmptyState title="Report not found">The athlete or scoring standard is unavailable.</EmptyState></div>
   const report = deriveAthleteReport(athlete, sessions, measurements, version)
   return <div className="page report-page"><div className="report-toolbar"><Link className="back-link" to="/reporting"><ArrowLeft size={16} />Reporting</Link><div><button className="button secondary" onClick={() => downloadText(`${athlete.firstName}-${athlete.lastName}-report.csv`, reportToCsv(report))}><Download size={17} />CSV</button><button className="button primary" onClick={() => window.print()}><Printer size={17} />Print</button></div></div>
