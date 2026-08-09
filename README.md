@@ -33,13 +33,22 @@ Download your Studio handoff JSON while signed in to the cohort. Place the downl
 
 ```bash
 npm run studio:import -- ~/Downloads/arkitect-studio-handoff.json
+npm run studio:status
 ```
 
 The command validates the versioned handoff package and writes private local context to `.arkitect/studio-context/`. That directory is ignored by Git. It contains the original package, every saved artifact version, decision events, Studio conversations, project metadata, other-system inventory, authority guidance, the data boundary, and the committed Assessment System Manifest when one exists. It also contains an `INDEX.md` written for your coding agent.
 
 The importer does not sign in to the cohort, call an Arketype service, invent a missing manifest, or alter your coaching decisions. It only reads the authenticated export you downloaded. Run the command again whenever you download a newer handoff. A successful import replaces the previous local context atomically.
 
-After importing, open this repository with Codex or Claude Code and paste the prompt from [COACH_AGENT_PROMPT.md](COACH_AGENT_PROMPT.md). Your coding agent must read `.arkitect/studio-context/INDEX.md` and every linked file before proposing changes.
+Importing is local and makes no network request. Asking Codex or Claude Code to read selected context files is a separate disclosure to that provider under your account and its terms. Review `data-boundary.json` and the export before proceeding. Structured athlete rows are excluded, but coach-entered free text may still contain sensitive material.
+
+The status command gives the package one of three readiness states without printing coach-authored notes or private identifiers:
+
+- **Ready** means a current committed manifest exists. A coding agent may propose a bounded implementation from that manifest, then wait for approval.
+- **Partial** means one or more workspaces have committed decisions, but no current cross-workspace manifest exists. A coding agent may add compatible plumbing, but it must ask before replacing scoring, reporting, or workflow behavior.
+- **Foundation** means there is no current committed workspace version. Keep the generic starter behavior until the coach approves draft decisions.
+
+After importing, open this repository with Codex or Claude Code and paste the prompt from [COACH_AGENT_PROMPT.md](COACH_AGENT_PROMPT.md). Your coding agent must run the status command and follow the progressive orientation sequence in `.arkitect/studio-context/INDEX.md`. It reads current authority and changed drafts first, then retrieves preserved history, events, conversations, or parallel-system records when the proposed change depends on them. It summarizes before editing and waits for approval. The original package is preserved as an archival byte copy. It does not need to be read again during normal orientation because that duplicates the extracted context.
 
 Do not commit the downloaded handoff or `.arkitect/studio-context/`. These files can contain private program design, standards decisions, conversations, and unresolved Studio work. A coding agent must treat the current committed manifest and committed artifacts as authority. Drafts, superseded versions, events, conversations, and inventory remain important context but do not become committed decisions automatically.
 
@@ -134,6 +143,7 @@ Metric-specific valid ranges are part of each standards version. Live intake aut
 - `src/lib/cloud.ts`: explicit local provider contract and future cloud boundary
 - `src/pages`: real application routes
 - `scripts/studio-handoff.mjs`: versioned, lossless Studio handoff importer
+- `scripts/studio-context-status.mjs`: deterministic Studio readiness check
 - `.arkitect/studio-context`: private imported coach context, always ignored by Git
 - `e2e`: browser, complete create-to-report workflow, reload persistence, publication locking, result disposition, and overflow checks
 - `COACH_AGENT_PROMPT.md`: orientation prompt for a coding agent
