@@ -9,7 +9,9 @@ Read README.md first.
 
 Then check whether .arkitect/studio-context/INDEX.md exists.
 
-If it exists, read INDEX.md, assessment-system-manifest.json, and every linked workspace artifact before proposing or changing product behavior. These files preserve my committed Assessment System Studio work. Treat explicit coaching decisions, scoring direction, standards lineage, testing protocols, report intent, limitations, and open questions as authoritative context. Do not silently repair, reinterpret, average, or replace those decisions. If two decisions conflict, or if implementation detail is missing, explain the conflict and ask me before choosing. Never commit the Studio context or copy private context into tests, fixtures, screenshots, or public documentation.
+If it exists, read INDEX.md, the original package, handoff metadata, authority guidance, data boundary, project metadata, manifest summary, coverage, other-system inventory, exported coding-agent guidance, every workspace artifact, every decision event, every Studio conversation, and assessment-system-manifest.json when that manifest exists. These files preserve all of my saved Assessment System Studio work.
+
+Treat a current committed manifest and artifacts marked committed as committed authority. Treat superseded artifacts as historical authority. Treat drafts, events, conversations, inventory, limitations, and open questions as important unresolved context that cannot override committed authority by themselves. If no current manifest exists, do not invent one or present draft work as committed. Do not silently repair, reinterpret, average, or replace any coaching decision. Follow the exported authority guidance when sources disagree. Explain conflicts or missing implementation detail and ask me before choosing. Never commit the Studio context or copy private context into tests, fixtures, screenshots, public documentation, prompts sent to remote services, or application output.
 
 If the Studio context is absent, tell me to download my authenticated handoff JSON and run:
 

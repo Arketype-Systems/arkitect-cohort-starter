@@ -25,13 +25,13 @@ Download your Studio handoff JSON while signed in to the cohort. Place the downl
 npm run studio:import -- ~/Downloads/arkitect-studio-handoff.json
 ```
 
-The command validates the versioned handoff package and writes private local context to `.arkitect/studio-context/`. That directory is ignored by Git. It contains the original package, the committed Assessment System Manifest, every committed workspace artifact, and an `INDEX.md` written for your coding agent.
+The command validates the versioned handoff package and writes private local context to `.arkitect/studio-context/`. That directory is ignored by Git. It contains the original package, every saved artifact version, decision events, Studio conversations, project metadata, other-system inventory, authority guidance, the data boundary, and the committed Assessment System Manifest when one exists. It also contains an `INDEX.md` written for your coding agent.
 
-The importer does not sign in to the cohort, call an Arketype service, or alter your coaching decisions. It only reads the authenticated export you downloaded. Run the command again whenever you download a newer handoff. A successful import replaces the previous local context atomically.
+The importer does not sign in to the cohort, call an Arketype service, invent a missing manifest, or alter your coaching decisions. It only reads the authenticated export you downloaded. Run the command again whenever you download a newer handoff. A successful import replaces the previous local context atomically.
 
 After importing, open this repository with Codex or Claude Code and paste the prompt from [COACH_AGENT_PROMPT.md](COACH_AGENT_PROMPT.md). Your coding agent must read `.arkitect/studio-context/INDEX.md` and every linked file before proposing changes.
 
-Do not commit the downloaded handoff or `.arkitect/studio-context/`. These files can contain private program design, standards decisions, and unresolved Studio work.
+Do not commit the downloaded handoff or `.arkitect/studio-context/`. These files can contain private program design, standards decisions, conversations, and unresolved Studio work. A coding agent must treat the current committed manifest and committed artifacts as authority. Drafts, superseded versions, events, conversations, and inventory remain important context but do not become committed decisions automatically.
 
 ## Data boundary
 
