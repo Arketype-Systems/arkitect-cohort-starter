@@ -30,6 +30,7 @@ test('required pages have no viewport overflow', async ({ page }, testInfo) => {
     expect(overflow, `horizontal overflow at ${route}`).toBe(false)
   }
   await page.goto('/testing/session-draft/live')
+  await expect(page.getByRole('main')).toHaveCount(1)
   await page.screenshot({ path: `screenshots/live-${testInfo.project.name}.png`, fullPage: true })
   await page.goto('/')
   await page.screenshot({ path: `screenshots/dashboard-${testInfo.project.name}.png`, fullPage: true })

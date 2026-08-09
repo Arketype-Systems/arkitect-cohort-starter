@@ -111,6 +111,35 @@ Open the local address printed in the terminal, normally `http://localhost:5173`
 5. Open an athlete report.
 6. Review standards and local backup controls.
 
+### Run this 15 minute rehearsal before the call
+
+Use only the synthetic information below. This sequence proves the connections coaches will care about without entering a real athlete.
+
+1. Open **Athletes** and add Avery Rehearsal. Set sex to Female, date of birth to April 15, 2010, grade to 11, primary sport to Soccer, primary position to Midfielder, additional sport to Track, additional position to 400m, and training group to Varsity.
+2. Open **Testing → New assessment**. Name the session `Coach Call Rehearsal`, keep all five required tests selected, select only Avery Rehearsal, and open live intake.
+3. Enter 24 inches for vertical jump, 94 inches for broad jump, 1.82 seconds for 10 yard sprint, 4.75 seconds for pro agility, and 10 bench repetitions. Confirm that each result shows a 0 through 4 grade and that the header reaches 5 of 5 results.
+4. Reload live intake while Bench Reps is selected. Select Bench Reps again after reload and confirm that 10 is still present. This proves IndexedDB persistence.
+5. Open review. Mark Avery's bench result Excluded and confirm that **Approve and publish** becomes unavailable. Return it to Valid, publish the session, and open Avery's report.
+6. Confirm that the report contains exactly one athlete, three report pages, the point total, metric grades, standards version, comparison archetype, and adaptive radar chart.
+7. Open **Database → Comparison archetypes**. Create `Female soccer · ages 16–18` with minimum age 16, maximum age 18, sex Female, sport Soccer, and priority 100. Reload Database and confirm that the archetype remains.
+8. Open **Rankings**, choose the new archetype, and confirm that Avery appears. Open Avery's report from the leaderboard and confirm that the new archetype appears without changing the point total.
+9. Open **Standards**. Confirm that one test at a time is readable, each test uses grades 0, 1, 2, 3, and 4, and both **Edit this test** and **Edit full protocol** are available. Cancel the editor unless you intentionally want to create a new standards version.
+10. Open **Database**. Download the CSV template, export the roster CSV, and export a full JSON backup. These downloads contain only the synthetic rehearsal data you entered.
+11. Open **Settings**. Change the organization name and colors, save, reload, and confirm that the shell keeps the new identity while Avery's point total remains unchanged.
+12. When the rehearsal is complete, open **Database → Reset synthetic demo**. This removes Avery and the rehearsal session from that browser and restores the original synthetic examples.
+
+If every step succeeds, the coach walkthrough is ready. The expected explanation is simple: standards profiles determine versioned 0 through 4 grades, database archetypes determine percentile peers, reports stay isolated to one athlete, and Rankings only displays published outcomes.
+
+### Rehearse the fresh coding agent handoff
+
+Open the private repository with the fresh Claude Code account. Paste the prompt from `COACH_AGENT_PROMPT.md`, followed by:
+
+```text
+Orient to this repository without editing anything. Confirm the data boundary, explain what already works, identify the scoring profile and comparison archetype contracts, run the documented verification commands, and tell me the smallest safe first customization. Wait for my approval before changing files.
+```
+
+The correct first response should describe the existing application and its safety contracts before proposing a change. It should not connect Supabase, upload athlete data, change standards, or edit source without approval.
+
 ## 7. Save a coding agent change
 
 After approving a change, ask the coding agent to run:
