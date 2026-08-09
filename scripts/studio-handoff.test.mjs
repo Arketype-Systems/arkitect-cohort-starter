@@ -85,6 +85,31 @@ describe('Studio handoff import', () => {
     expect(() => validateStudioHandoffPackage({ ...syntheticPackage(), dataBoundary: { containsAthleteRows: true, description: 'Unsafe.' } })).toThrow('containsAthleteRows must be false')
   })
 
+  it('accepts authority-safe selection labels without rejecting older packages', () => {
+    for (const selectionReason of [
+      'committed_manifest',
+      'cohort_system',
+      'requested_project',
+      'current_coach_manifest',
+      'instructor_fallback',
+      'draft_cohort_system',
+      'primary',
+      'most_recent',
+    ]) {
+      expect(
+        validateStudioHandoffPackage({
+          ...syntheticPackage(),
+          dataBoundary: {
+            containsAthleteRows: false,
+            description: 'Synthetic system design only.',
+            freeTextMayContainSensitiveContent: true,
+          },
+          selectionReason,
+        }).selectionReason,
+      ).toBe(selectionReason)
+    }
+  })
+
   it('rejects path-shaped workspace keys and symbolic-link inputs', async () => {
     const unsafe = syntheticPackage()
     unsafe.workspaceArtifacts[0].workspace = '../../outside'

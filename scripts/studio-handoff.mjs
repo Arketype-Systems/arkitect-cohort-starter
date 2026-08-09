@@ -88,6 +88,12 @@ export function validateStudioHandoffPackage(value) {
   if (value.dataBoundary.containsAthleteRows !== false) {
     fail('dataBoundary.containsAthleteRows must be false.')
   }
+  if (
+    value.dataBoundary.freeTextMayContainSensitiveContent !== undefined &&
+    value.dataBoundary.freeTextMayContainSensitiveContent !== true
+  ) {
+    fail('dataBoundary.freeTextMayContainSensitiveContent must be true when present.')
+  }
   if (typeof value.dataBoundary.description !== 'string' || value.dataBoundary.description.length === 0) {
     fail('dataBoundary.description must be a nonempty string.')
   }
@@ -96,7 +102,16 @@ export function validateStudioHandoffPackage(value) {
   if (typeof value.codingAgentPrompt !== 'string' || value.codingAgentPrompt.length === 0) {
     fail('codingAgentPrompt must be a nonempty string.')
   }
-  if (!new Set(['committed_manifest', 'cohort_system', 'primary', 'most_recent']).has(value.selectionReason)) {
+  if (!new Set([
+    'committed_manifest',
+    'cohort_system',
+    'requested_project',
+    'current_coach_manifest',
+    'instructor_fallback',
+    'draft_cohort_system',
+    'primary',
+    'most_recent',
+  ]).has(value.selectionReason)) {
     fail('selectionReason is not supported by schemaVersion 1.')
   }
   if (value.agentIndexMarkdown !== undefined && typeof value.agentIndexMarkdown !== 'string') {
@@ -199,9 +214,9 @@ This private, local directory contains the coach-authored decisions exported fro
 
 1. Read the original package, authority guidance, data boundary, project metadata, manifest summary, coverage, exported coding-agent prompt, every workspace artifact, every decision event, every Studio conversation, and the committed manifest when one exists.
 2. Treat a current committed manifest and artifacts marked committed as committed authority. Superseded artifacts are historical authority, not the current specification.
-3. Treat drafts, decision events, conversations, other-system inventory, and open questions as saved context that may be unresolved. They inform the build but do not override committed authority by themselves.
+3. Treat drafts, decision events, conversations, other-system inventory, and open questions as saved context that may be unresolved. They inform the build but do not override committed authority by themselves. For each parallel system, only a manifest labeled current_committed_manifest is current authority for that system. Never apply another system's rules unless the coach explicitly chooses it.
 4. Never manufacture a committed manifest from draft-only context. Do not silently repair, reinterpret, average, or replace a coaching decision. Surface conflicts and missing implementation detail to the coach.
-5. Follow the exported authority guidance when sources disagree, while preserving every source. Keep athlete identities, athlete rows, credentials, and private exports out of Git.
+5. Follow the exported authority guidance when sources disagree, while preserving every source. Review coach-entered free text before sharing it with any external service. Keep athlete identities, athlete rows, credentials, and private exports out of Git.
 
 ## Authority
 
