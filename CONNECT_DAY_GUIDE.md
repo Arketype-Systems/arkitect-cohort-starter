@@ -37,6 +37,18 @@ npm install
 
 You can also ask Codex or Claude Code to clone the repository and install its dependencies for you.
 
+### Browser fallback when local setup is not ready
+
+Use this fallback only when Git or Node.js cannot be made ready during the walkthrough:
+
+1. Open **Code** in your new private repository.
+2. Open **Codespaces**.
+3. Select **Create codespace on main**.
+4. Wait for the browser workspace to open.
+5. Run `npm install` in its terminal.
+
+The codespace opens the same private repository. It does not create a second application or move ownership away from your GitHub account. GitHub may count the session against your personal Codespaces allowance, so return to a local clone after Connect Day when practical.
+
 ## 3. Download your complete Studio handoff
 
 Skip this section if you did not complete Studio work.
@@ -72,7 +84,7 @@ Open the repository in Codex or Claude Code. Then paste the prompt from [COACH_A
 For the first turn, ask the coding agent to orient before editing:
 
 ```text
-Read COACH_AGENT_PROMPT.md and follow it. Read my complete Studio context when it exists. Before changing source, summarize my current committed assessment authority, unresolved drafts and decisions, parallel systems, and the application features that already work. Then propose the smallest first improvement and wait for my approval.
+Read COACH_AGENT_PROMPT.md and follow it. Read .arkitect/studio-context/INDEX.md when it exists. Before changing source, summarize the application features that already work, my current committed assessment authority, unresolved drafts and decisions, and parallel systems. Then propose the smallest useful first improvement and wait for my approval.
 ```
 
 The current committed manifest is authoritative when one exists. Drafts, conversations, decision history, and parallel systems remain important context, but they do not silently replace committed scoring rules.
