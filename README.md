@@ -1,6 +1,6 @@
-# Fieldhouse Assessment System Starter
+# Assessment System Starter
 
-Fieldhouse is a polished, local first assessment application for sports performance coaches. It manages multi-sport athlete profiles, captures multiple testing attempts, reviews completeness, publishes versioned point totals, imports and exports CSV files, and creates one athlete report at a time.
+Assessment System is a polished, local first assessment application for sports performance coaches. It manages multi-sport athlete profiles and photos, captures multiple testing attempts, reviews completeness, publishes versioned point totals, compares specific cohorts, imports and exports CSV files, and creates one athlete report at a time. “Fieldhouse” is only the synthetic starter organization name and can be replaced in Settings.
 
 The included athletes, sessions, results, and standards are clearly labeled synthetic examples. No real athlete data or proprietary performance standards are included.
 
@@ -45,11 +45,11 @@ Do not commit the downloaded handoff or `.arkitect/studio-context/`. These files
 
 ## Data boundary
 
-All athlete data is stored in IndexedDB inside the current browser profile. The application has no remote database, account system, analytics service, or athlete data API. It does not route data through Arkitect or Arketype infrastructure.
+All athlete data is stored in IndexedDB inside the current browser profile. The application has no connected remote database, account system, analytics service, or athlete data API. It does not route data through Arkitect or Arketype infrastructure. A typed data-provider boundary is included for a future coach-approved adapter, but Supabase is not installed, configured, or represented as connected.
 
 A private GitHub repository protects the source repository. It does not make a later web deployment private. A standard deployment can be reachable by anyone with its address until authentication and access controls are configured. Keep the application local and synthetic until those controls, a coach-owned production database, backups, retention, and deletion are deliberately reviewed.
 
-Browser storage belongs to the device and browser profile. Clearing site data can erase it. Use **Local database → Export full backup** regularly. A full backup is a JSON file. Roster interchange uses CSV.
+Browser storage belongs to the device and browser profile. Clearing site data can erase it. Use **Database → Export full backup** regularly. A full backup is a JSON file. Roster interchange uses CSV.
 
 ## Everyday workflow
 
@@ -58,11 +58,12 @@ Browser storage belongs to the device and browser profile. Clearing site data ca
 3. Open **Testing → New session** to select a roster and tests. The matching standards profile is shown for each athlete and pinned to the session.
 4. Use live intake to record attempts. The best valid attempt is selected according to scoring direction and saved automatically.
 5. Open review. Publication remains locked until all required results are valid.
-6. Publish, then open **Reporting** for individual athlete reports and summed point totals. Dashboard charts update from published results.
+6. Publish, then open **Reporting** for a three-page individual athlete report with summed points, metric grades, same-archetype percentiles, an adaptive radar chart, strengths, priorities, and history.
+7. Open **Rankings** to compare point totals or raw test results. Filter by standards profile, sex, sport, position, or grade. The Archetypes tab shows the current standards profiles and their assigned athletes.
 
 ## CSV import
 
-Open **Local database** and download the athlete template. Upload the completed file to see interactive field mapping and row validation before importing. Standard and common column names map automatically. Other headers can be assigned with the mapping controls. Valid rows can be imported while invalid rows remain visible. Matching first and last names are treated as duplicates without regard to capitalization.
+Open **Database** and download the athlete template. Upload the completed file to see interactive field mapping and row validation before importing. Standard and common column names map automatically. Other headers can be assigned with the mapping controls. Valid rows can be imported while invalid rows remain visible. Matching first and last names are treated as duplicates without regard to capitalization.
 
 ## Build, test, and verify
 
@@ -90,11 +91,11 @@ npx playwright install chromium
 
 ## Backup, export, and reset
 
-- **Full backup:** Local database → Export full backup.
-- **Full restore:** Local database → Restore full backup. The entire file and every record relationship are validated before any existing data is replaced.
-- **Roster CSV:** Local database → Export roster CSV.
+- **Full backup:** Database → Export full backup.
+- **Full restore:** Database → Restore full backup. The entire file and every record relationship are validated before any existing data is replaced.
+- **Roster CSV:** Database → Export roster CSV.
 - **One athlete result CSV:** Reporting → open an athlete → CSV.
-- **Reset:** Local database → Reset demo data. This removes local changes and restores the synthetic demo.
+- **Reset:** Database → Reset demo data. This removes local changes and restores the synthetic demo.
 
 There is intentionally no silent cloud backup. Treat exported JSON files as sensitive when real athletes are entered.
 
@@ -112,7 +113,13 @@ The included `Editable U.S. S&C Starter Battery` uses five synthetic performance
 - Missing or excluded required results return **Incomplete**. Weight is never redistributed.
 - Reports filter measurements by both athlete ID and session ID. They never borrow another athlete’s result.
 
-Use **Standards → Create version** to create an append-only scoring revision. Add as many audience profiles as needed, then edit the five metric bands inside each profile. Existing sessions and reports remain attached to their exact original version and pinned athlete profile. The editor rejects weight drift, invalid ranges, band gaps, band overlaps, missing fallback profiles, points outside 0 through 4, and points that are reversed for the declared scoring direction. The bundled default remains in `src/lib/standards.ts`; update the explicit fixtures in `src/lib/scoring.test.ts` if a developer intentionally changes that seed.
+Use **Standards → Edit this test** for a focused revision or **Edit full protocol** for batteries and audience profiles. Saving always creates an append-only version. Add as many audience profiles as needed, then edit the five metric bands inside each profile. Existing sessions and reports remain attached to their exact original version and pinned athlete profile. The editor rejects weight drift, invalid ranges, band gaps, band overlaps, missing fallback profiles, points outside 0 through 4, and points that are reversed for the declared scoring direction. The bundled default remains in `src/lib/standards.ts`; update the explicit fixtures in `src/lib/scoring.test.ts` if a developer intentionally changes that seed.
+
+## Coach branding and redesign
+
+Open **Settings** to change the organization name, product name, logo, colors, and typography. Three design directions can be previewed and saved immediately. Brand settings are stored in their own IndexedDB setting and do not alter athletes, standards, measurements, sessions, or scores.
+
+For a broader visual overhaul, give [DESIGN_AGENT_PROMPT.md](DESIGN_AGENT_PROMPT.md) to a coding agent. It requires the agent to propose multiple visual directions while reusing real routes and synthetic data, and it forbids changes to the application’s persistence, scoring, isolation, and versioning contracts during concept work.
 
 Metric-specific valid ranges are part of each standards version. Live intake automatically marks an out-of-range selected attempt invalid. Review allows every captured result to be marked Valid, Invalid, or Excluded. Published sessions are locked against further live-entry changes.
 
@@ -123,11 +130,14 @@ Metric-specific valid ranges are part of each standards version. Live intake aut
 - `src/lib/scoring.ts`: deterministic scoring
 - `src/lib/csv.ts`: CSV parsing, validation, and export
 - `src/lib/report.ts`: one athlete report derivation
+- `src/lib/branding.ts`: coach-owned brand tokens and visual presets
+- `src/lib/cloud.ts`: explicit local provider contract and future cloud boundary
 - `src/pages`: real application routes
 - `scripts/studio-handoff.mjs`: versioned, lossless Studio handoff importer
 - `.arkitect/studio-context`: private imported coach context, always ignored by Git
 - `e2e`: browser, complete create-to-report workflow, reload persistence, publication locking, result disposition, and overflow checks
 - `COACH_AGENT_PROMPT.md`: orientation prompt for a coding agent
+- `DESIGN_AGENT_PROMPT.md`: safe multiple-concept redesign workflow
 
 ## Privacy and production use
 
