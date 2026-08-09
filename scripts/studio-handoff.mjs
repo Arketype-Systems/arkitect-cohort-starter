@@ -1,4 +1,4 @@
-import { randomUUID } from 'node:crypto'
+import { createHash, randomUUID } from 'node:crypto'
 import { lstat, mkdir, readFile, rename, rm, stat, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 
@@ -196,10 +196,95 @@ function markdownText(value) {
   return printable.replace(/([\\`*_[\]<>])/g, '\\$1').slice(0, 100)
 }
 
+function canonicalize(value) {
+  if (Array.isArray(value)) return value.map(canonicalize)
+  if (!isRecord(value)) return value
+  return Object.fromEntries(Object.keys(value).sort().map((key) => [key, canonicalize(value[key])]))
+}
+
+function payloadDigest(payload) {
+  return createHash('sha256').update(JSON.stringify(canonicalize(payload))).digest('hex')
+}
+
+export function buildStudioArtifactCatalog(value) {
+  const pkg = validateStudioHandoffPackage(value)
+  const records = pkg.workspaceArtifacts.map((artifact, index) => ({
+    file: `artifacts/${String(index + 1).padStart(3, '0')}.json`,
+    workspace: artifact.workspace,
+    version: artifact.version,
+    status: artifact.status,
+    payloadSha256: payloadDigest(artifact.payload),
+  }))
+  const latestDraftVersions = new Map()
+  for (const record of records) {
+    if (record.status !== 'draft') continue
+    latestDraftVersions.set(record.workspace, Math.max(latestDraftVersions.get(record.workspace) ?? 0, record.version))
+  }
+
+  return records.map((record) => {
+    if (record.status !== 'draft') {
+      return { ...record, samePayloadAs: null, readDuringOrientation: record.status === 'committed' }
+    }
+    const match = records
+      .filter((candidate) => candidate.workspace === record.workspace && candidate.version < record.version && candidate.payloadSha256 === record.payloadSha256)
+      .sort((left, right) => right.version - left.version)[0]
+    return {
+      ...record,
+      samePayloadAs: match
+        ? { file: match.file, workspace: match.workspace, version: match.version, status: match.status }
+        : null,
+      readDuringOrientation: record.version === latestDraftVersions.get(record.workspace) && !match,
+    }
+  })
+}
+
+export function summarizeStudioHandoffPackage(value) {
+  const pkg = validateStudioHandoffPackage(value)
+  const artifactCatalog = buildStudioArtifactCatalog(pkg)
+  const byStatus = { committed: 0, draft: 0, superseded: 0 }
+  const committedWorkspaces = []
+  const draftWorkspaces = []
+  const supersededWorkspaces = []
+
+  for (const artifact of pkg.workspaceArtifacts) {
+    byStatus[artifact.status] += 1
+    const label = `${artifact.workspace} v${artifact.version}`
+    if (artifact.status === 'committed') committedWorkspaces.push(label)
+    if (artifact.status === 'draft') draftWorkspaces.push(label)
+    if (artifact.status === 'superseded') supersededWorkspaces.push(label)
+  }
+
+  const readiness = pkg.committedManifest
+    ? 'ready'
+    : committedWorkspaces.length > 0
+      ? 'partial'
+      : 'foundation'
+
+  return {
+    readiness,
+    currentManifest: pkg.committedManifest !== null,
+    committedWorkspaces,
+    draftWorkspaces,
+    supersededWorkspaces,
+    unchangedDrafts: artifactCatalog
+      .filter((artifact) => artifact.status === 'draft' && artifact.samePayloadAs)
+      .map((artifact) => `${artifact.workspace} v${artifact.version} matches ${artifact.samePayloadAs.workspace} v${artifact.samePayloadAs.version} (${artifact.samePayloadAs.status})`),
+    orientationArtifactFiles: artifactCatalog.filter((artifact) => artifact.readDuringOrientation).map((artifact) => artifact.file),
+    artifactCounts: byStatus,
+    decisionEventCount: pkg.decisionEvents.length,
+    studioConversationCount: pkg.studioConversations.length,
+    otherSystemCount: pkg.otherSystems.length,
+  }
+}
+
 function buildIndex(pkg) {
-  const artifactRows = pkg.workspaceArtifacts.map((artifact, index) => {
-    const number = String(index + 1).padStart(3, '0')
-    return `- [${markdownText(artifact.workspace)} v${artifact.version} (${artifact.status})](artifacts/${number}.json)`
+  const summary = summarizeStudioHandoffPackage(pkg)
+  const artifactCatalog = buildStudioArtifactCatalog(pkg)
+  const artifactRows = artifactCatalog.map((artifact) => {
+    const duplicate = artifact.samePayloadAs
+      ? `; payload matches ${artifact.samePayloadAs.workspace} v${artifact.samePayloadAs.version} (${artifact.samePayloadAs.status})`
+      : ''
+    return `- [${markdownText(artifact.workspace)} v${artifact.version} (${artifact.status})](${artifact.file})${duplicate}`
   })
   const manifestLine = pkg.committedManifest
     ? '[assessment-system-manifest.json](assessment-system-manifest.json)'
@@ -210,13 +295,29 @@ function buildIndex(pkg) {
 
 This private, local directory contains the coach-authored decisions exported from Assessment System Studio. It is ignored by Git.
 
+## Build readiness
+
+- Readiness: **${summary.readiness.toUpperCase()}**
+- Current committed manifest: **${summary.currentManifest ? 'Yes' : 'No'}**
+- Current committed workspace versions: ${summary.committedWorkspaces.length > 0 ? summary.committedWorkspaces.map(markdownText).join(', ') : 'None'}
+- Draft workspace versions: ${summary.draftWorkspaces.length > 0 ? summary.draftWorkspaces.map(markdownText).join(', ') : 'None'}
+- Unchanged draft payloads: ${summary.unchangedDrafts.length > 0 ? summary.unchangedDrafts.map(markdownText).join(', ') : 'None'}
+- Orientation artifact files: ${summary.orientationArtifactFiles.length > 0 ? summary.orientationArtifactFiles.map(markdownText).join(', ') : 'None'}
+- Isolated parallel systems: ${summary.otherSystemCount}
+
+Run \`npm run studio:status\` before proposing source changes. A ready package has a current committed manifest. A partial package has committed workspace decisions but no complete cross-workspace manifest. A foundation package contains no current committed workspace version. Partial and foundation packages require coach confirmation before unfinished decisions become application behavior.
+
 ## Coding agent rules
 
-1. Read the original package, authority guidance, data boundary, project metadata, manifest summary, coverage, exported coding-agent prompt, every workspace artifact, every decision event, every Studio conversation, and the committed manifest when one exists.
-2. Treat a current committed manifest and artifacts marked committed as committed authority. Superseded artifacts are historical authority, not the current specification.
-3. Treat drafts, decision events, conversations, other-system inventory, and open questions as saved context that may be unresolved. They inform the build but do not override committed authority by themselves. For each parallel system, only a manifest labeled current_committed_manifest is current authority for that system. Never apply another system's rules unless the coach explicitly chooses it.
-4. Never manufacture a committed manifest from draft-only context. Do not silently repair, reinterpret, average, or replace a coaching decision. Surface conflicts and missing implementation detail to the coach.
-5. Follow the exported authority guidance when sources disagree, while preserving every source. Review coach-entered free text before sharing it with any external service. Keep athlete identities, athlete rows, credentials, and private exports out of Git.
+1. Begin with authority guidance, the data boundary, project metadata, manifest summary, coverage, the artifact catalog, the exported coding-agent prompt, the exported agent index, and the committed manifest when one exists.
+2. The original package is preserved in \`studio-handoff.original.json\` as an archival byte copy. The extracted files listed below contain the same review context. Do not read the archival copy during normal orientation because that duplicates the complete package in the model context. Use it only to investigate a validation or extraction discrepancy.
+3. For the first orientation, read every currently committed workspace artifact and every latest draft whose payload differs from the preceding committed version. Do not load an unchanged draft or a superseded artifact into model context merely to rediscover that it is identical or historical.
+4. Treat a current committed manifest and artifacts marked committed as committed authority. Superseded artifacts are historical authority, not the current specification.
+5. Treat drafts, decision events, conversations, other-system inventory, and open questions as saved context that may be unresolved. They inform the build but do not override committed authority by themselves. Retrieve the relevant historical artifact, event, conversation, or parallel-system record when the proposed change depends on its rationale or scope. For each parallel system, only a manifest labeled current_committed_manifest is current authority for that system. Never apply another system's rules unless the coach explicitly chooses it.
+6. Never manufacture a committed manifest from draft-only context. Do not silently repair, reinterpret, average, or replace a coaching decision. Surface conflicts and missing implementation detail to the coach.
+7. Never copy private project IDs, artifact IDs, event IDs, coach-authored free text, or other provenance values into tracked source merely to prove traceability. Keep provenance inside this ignored directory.
+8. Use the artifact catalog before describing a draft as a revision. When the catalog reports an identical payload, say that there is no content delta and ask whether the draft should remain, be discarded, or be committed intentionally.
+9. Follow the exported authority guidance when sources disagree, while preserving every source. Review coach-entered free text before sharing it with any external service. Keep athlete identities, athlete rows, credentials, and private exports out of Git.
 
 ## Authority
 
@@ -234,6 +335,7 @@ This private, local directory contains the coach-authored decisions exported fro
 - Project metadata: [project-metadata.json](project-metadata.json)
 - Manifest summary: [manifest-summary.json](manifest-summary.json)
 - Export coverage: [coverage.json](coverage.json)
+- Artifact catalog: [artifact-catalog.json](artifact-catalog.json)
 - Other-system inventory: [other-system-inventory.json](other-system-inventory.json)
 - Decision events: [decision-events.json](decision-events.json)
 - Studio conversations: [studio-conversations.json](studio-conversations.json)
@@ -270,6 +372,8 @@ export async function importStudioHandoff({ inputPath, repoRoot }) {
     fail('the input file is not valid JSON.')
   }
   const pkg = validateStudioHandoffPackage(parsed)
+  const summary = summarizeStudioHandoffPackage(pkg)
+  const artifactCatalog = buildStudioArtifactCatalog(pkg)
 
   const localRoot = path.join(resolvedRepo, '.arkitect')
   const contextRoot = path.join(resolvedRepo, STUDIO_CONTEXT_DIRECTORY)
@@ -299,6 +403,7 @@ export async function importStudioHandoff({ inputPath, repoRoot }) {
       ['project-metadata.json', pkg.project],
       ['manifest-summary.json', pkg.manifestSummary],
       ['coverage.json', pkg.coverage],
+      ['artifact-catalog.json', artifactCatalog],
       ['other-system-inventory.json', pkg.otherSystems],
       ['authority-guidance.json', pkg.authority],
       ['data-boundary.json', pkg.dataBoundary],
@@ -336,5 +441,6 @@ export async function importStudioHandoff({ inputPath, repoRoot }) {
     artifactCount: pkg.workspaceArtifacts.length,
     contextRoot,
     manifestPath: pkg.committedManifest ? path.join(contextRoot, 'assessment-system-manifest.json') : null,
+    summary,
   }
 }

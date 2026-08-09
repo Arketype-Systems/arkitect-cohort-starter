@@ -4,7 +4,7 @@ import { access, mkdtemp, readFile, symlink, writeFile } from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
 import { describe, expect, it } from 'vitest'
-import { importStudioHandoff, validateStudioHandoffPackage } from './studio-handoff.mjs'
+import { buildStudioArtifactCatalog, importStudioHandoff, summarizeStudioHandoffPackage, validateStudioHandoffPackage } from './studio-handoff.mjs'
 
 const artifactIds = {
   intake: '10000000-0000-4000-8000-000000000001',
@@ -58,6 +58,62 @@ async function fixtureFile(pkg = syntheticPackage()) {
 }
 
 describe('Studio handoff import', () => {
+  it('classifies ready, partial, and foundation packages without exposing payload values', () => {
+    const ready = summarizeStudioHandoffPackage(syntheticPackage())
+    expect(ready).toMatchObject({
+      readiness: 'ready',
+      currentManifest: true,
+      committedWorkspaces: ['intake v2', 'scoring_rubric v3', 'insight v4'],
+      draftWorkspaces: [],
+      supersededWorkspaces: ['intake v1'],
+      orientationArtifactFiles: ['artifacts/002.json', 'artifacts/003.json', 'artifacts/004.json'],
+      otherSystemCount: 1,
+    })
+
+    const partialPackage = syntheticPackage()
+    partialPackage.committedManifest = null
+    const partial = summarizeStudioHandoffPackage(partialPackage)
+    expect(partial).toMatchObject({ readiness: 'partial', currentManifest: false })
+
+    const foundationPackage = syntheticPackage()
+    foundationPackage.committedManifest = null
+    foundationPackage.workspaceArtifacts = foundationPackage.workspaceArtifacts.map((artifact) => ({
+      ...artifact,
+      status: 'draft',
+      committedAt: null,
+    }))
+    const foundation = summarizeStudioHandoffPackage(foundationPackage)
+    expect(foundation).toMatchObject({
+      readiness: 'foundation',
+      currentManifest: false,
+      committedWorkspaces: [],
+      draftWorkspaces: ['intake v1', 'intake v2', 'scoring_rubric v3', 'insight v4'],
+    })
+
+    expect(JSON.stringify({ ready, partial, foundation })).not.toContain('Synthetic context only')
+  })
+
+  it('catalogs identical draft payloads without exposing artifact IDs or payload values', () => {
+    const pkg = syntheticPackage()
+    pkg.workspaceArtifacts.push({
+      ...structuredClone(pkg.workspaceArtifacts[1]),
+      version: 5,
+      status: 'draft',
+      committedAt: null,
+    })
+    const catalog = buildStudioArtifactCatalog(pkg)
+    expect(catalog.at(-1)).toMatchObject({
+      file: 'artifacts/005.json',
+      workspace: 'intake',
+      version: 5,
+      status: 'draft',
+      samePayloadAs: { file: 'artifacts/002.json', workspace: 'intake', version: 2, status: 'committed' },
+      readDuringOrientation: false,
+    })
+    expect(JSON.stringify(catalog)).not.toContain(artifactIds.intake)
+    expect(JSON.stringify(catalog)).not.toContain('Synthetic quality')
+  })
+
   it('imports a valid package and preserves every artifact payload', async () => {
     const fixture = await fixtureFile()
     const result = await importStudioHandoff(fixture)
@@ -70,6 +126,10 @@ describe('Studio handoff import', () => {
     expect(index).toContain('intake v2 (committed)')
     expect(index).toContain('scoring\\_rubric v3 (committed)')
     expect(index).toContain('drafts, decision events, conversations')
+    expect(index).toContain('Readiness: **READY**')
+    expect(index).toContain('archival byte copy')
+    expect(result.summary).toMatchObject({ readiness: 'ready', currentManifest: true })
+    expect(JSON.parse(await readFile(path.join(result.contextRoot, 'artifact-catalog.json'), 'utf8'))).toHaveLength(4)
   })
 
   it('rejects malformed and unsupported packages', () => {
@@ -183,5 +243,7 @@ describe('Studio handoff import', () => {
     expect(await readFile(path.join(result.contextRoot, 'coding-agent-prompt.md'), 'utf8')).toBe(pkg.codingAgentPrompt)
     expect(await readFile(path.join(result.contextRoot, 'exported-agent-index.md'), 'utf8')).toBe(pkg.agentIndexMarkdown)
     expect(await readFile(path.join(result.contextRoot, 'INDEX.md'), 'utf8')).toContain('None was current at export. Do not invent or infer one.')
+    expect(await readFile(path.join(result.contextRoot, 'INDEX.md'), 'utf8')).toContain('Readiness: **FOUNDATION**')
+    expect(result.summary).toMatchObject({ readiness: 'foundation', currentManifest: false })
   })
 })

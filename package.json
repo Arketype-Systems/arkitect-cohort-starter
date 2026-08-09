@@ -13,6 +13,7 @@
     "test:watch": "vitest",
     "test:e2e": "playwright test",
     "studio:import": "node scripts/import-studio-handoff.mjs",
+    "studio:status": "node scripts/studio-context-status.mjs",
     "privacy:scan": "node scripts/privacy-scan.mjs",
     "verify": "npm run typecheck && npm run lint && npm test && npm run build && npm run privacy:scan"
   },

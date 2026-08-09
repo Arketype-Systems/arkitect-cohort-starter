@@ -72,6 +72,7 @@ The manifest, artifact payloads, events, conversations, project, summaries, cove
 
 - `studio-handoff.original.json` preserves the downloaded bytes.
 - `assessment-system-manifest.json` preserves the committed manifest when one exists. No file is created when the package contains `null`.
+- `artifact-catalog.json` records safe workspace keys, versions, statuses, payload hashes, and exact draft-payload matches without copying payload values or private identifiers.
 - `artifacts/001.json` and subsequent numbered files preserve each complete artifact envelope and payload.
 - `handoff-metadata.json`, `project-metadata.json`, `manifest-summary.json`, `coverage.json`, `decision-events.json`, `studio-conversations.json`, `other-system-inventory.json`, `authority-guidance.json`, and `data-boundary.json` preserve the structured context.
 - `coding-agent-prompt.md` and optional `exported-agent-index.md` preserve the platform-authored agent guidance.
@@ -80,3 +81,17 @@ The manifest, artifact payloads, events, conversations, project, summaries, cove
 The output directory is `.arkitect/studio-context/` and is ignored by Git. A replacement uses a temporary sibling directory and an atomic rename so a failed import does not leave a partial context package.
 
 Unsupported versions fail closed. Workspace labels never become output paths. Symbolic-link inputs and destinations are rejected.
+
+## Agent readiness
+
+Run `npm run studio:status` after importing. The command validates the preserved package and reports only structural state:
+
+- `ready` means `committedManifest` is present.
+- `partial` means no committed manifest is present, but at least one workspace artifact is currently committed.
+- `foundation` means no committed manifest and no currently committed workspace artifact are present.
+
+The command never prints artifact payloads, coach-authored free text, private identifiers, or parallel-system names. It lists safe workspace keys and version numbers so an agent can establish authority without guessing.
+
+The extracted context files are the normal review surface. `studio-handoff.original.json` is retained as the byte-preserved archive and is not read into an agent context unless a validation or extraction discrepancy must be investigated. This avoids presenting the same complete package twice.
+
+Initial orientation uses progressive retrieval. The agent reads current authority and materially changed drafts first. Superseded artifacts, decision events, conversations, and parallel-system payloads remain available and must be retrieved when a proposed change depends on their rationale, conflict, or scope. This preserves the complete handoff without charging every first turn for unrelated historical material.
