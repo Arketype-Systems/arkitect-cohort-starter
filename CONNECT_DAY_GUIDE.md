@@ -140,6 +140,8 @@ Orient to this repository without editing anything. Confirm the data boundary, e
 
 The correct first response should describe the existing application and its safety contracts before proposing a change. It should not connect Supabase, upload athlete data, change standards, or edit source without approval.
 
+Before the call, also read [KNOWN_LIMITATIONS.md](KNOWN_LIMITATIONS.md). Do not demonstrate **Print report** as a completed feature. The on-screen three-page report and athlete CSV export work, but browser printing and PDF delivery are not currently certified.
+
 ## 7. Save a coding agent change
 
 After approving a change, ask the coding agent to run:

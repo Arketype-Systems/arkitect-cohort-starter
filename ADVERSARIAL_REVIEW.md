@@ -26,6 +26,7 @@ This review covers the public synthetic starter. It is an engineering review, no
 
 ## Deliberate boundaries
 
+- Report printing is not certified across target browsers. The button invokes `window.print()`, but embedded browsers may suppress the dialog and the application does not generate a PDF. This is documented in `KNOWN_LIMITATIONS.md` and must not be represented as complete.
 - Supabase, authentication, users, roles, remote backup, realtime collaboration, and selectable light or dark mode are not implemented. The application says so directly.
 - The included scoring bands are editable starter standards, not validated population norms.
 - Percentiles are empirical same-archetype, same-version context. They require at least two eligible athletes and do not change stored measurements, standards profiles, or point grades.

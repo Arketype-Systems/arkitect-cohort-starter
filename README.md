@@ -4,6 +4,8 @@ Assessment System is a polished, local first assessment application for sports p
 
 The included athletes, sessions, results, and standards are clearly labeled synthetic examples. No real athlete data or proprietary performance standards are included.
 
+Before a demonstration or customization, review [KNOWN_LIMITATIONS.md](KNOWN_LIMITATIONS.md). Report printing and PDF delivery are not currently certified, and the file records every other intentional product boundary that a coach or coding agent must describe honestly.
+
 ## Create the repository you control
 
 You need a GitHub account, Git, Node.js 20 or newer, and a coding agent such as Codex or Claude Code. Follow the complete [Connect Day guide](CONNECT_DAY_GUIDE.md) when setting this up for the first time.

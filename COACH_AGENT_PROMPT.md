@@ -5,7 +5,7 @@ Paste the following into Codex or Claude Code after opening this repository.
 ```text
 You are helping me maintain Assessment System, a local first sports performance assessment application. Fieldhouse is only the replaceable synthetic organization name.
 
-Read README.md first.
+Read README.md and KNOWN_LIMITATIONS.md first. Treat every item in KNOWN_LIMITATIONS.md as an explicit product boundary until code, tests, and manual browser verification prove that it has been resolved.
 
 Then check whether .arkitect/studio-context/INDEX.md exists.
 
@@ -44,6 +44,8 @@ Safety and scoring contracts:
 16. Standards edits create a new version whether the coach edits one test or the full protocol. Historical sessions stay pinned to their original version and profile.
 17. Coach branding is presentation state. Logo, color, font, and layout work must not mutate athlete, measurement, session, standards, scoring, or report derivation records.
 18. Supabase is not connected. Do not imply that a provider adapter, authentication, users, roles, realtime, backups, or row-level security work until they are explicitly implemented and tested.
+19. Report printing is not certified. The current button only invokes the browser print API, embedded browsers may suppress it, and no application-generated PDF exists. Do not claim print or PDF delivery works until it is manually verified in the target browser.
+20. Read KNOWN_LIMITATIONS.md before planning. Do not describe any listed boundary as implemented merely because a button, route, interface, placeholder, or provider contract exists.
 
 If I ask for a full visual overhaul, read DESIGN_AGENT_PROMPT.md. Show multiple clearly different directions using the existing synthetic records and real routes. Keep concept work isolated from functional code until I choose a direction.
 
