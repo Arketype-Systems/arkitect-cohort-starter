@@ -1,6 +1,9 @@
 import { afterEach, describe, expect, it } from 'vitest'
-import { FieldhouseDatabase, ensureSeeded } from './db'
+import { FieldhouseDatabase, ensureSeeded, restoreBackup, validateBackup } from './db'
+import { SYNTHETIC_ATHLETES, SYNTHETIC_MEASUREMENTS, SYNTHETIC_SESSIONS } from './seed'
+import { STARTER_STANDARDS } from './standards'
 describe('IndexedDB persistence mapping', () => {
   const names: string[] = []; afterEach(async () => { await Promise.all(names.map((name) => indexedDB.deleteDatabase(name))) })
   it('reopens sessions and measurements with stable athlete IDs', async () => { const name = `test-${crypto.randomUUID()}`; names.push(name); const first = new FieldhouseDatabase(name); await ensureSeeded(first); const session = await first.sessions.get('session-complete'); first.close(); const reopened = new FieldhouseDatabase(name); const measurement = await reopened.measurements.where({ sessionId: 'session-complete', athleteId: 'ath-a' }).first(); expect(session?.athleteIds).toContain('ath-a'); expect(measurement?.athleteId).toBe('ath-a'); expect(measurement?.sessionId).toBe(session?.id); reopened.close() })
+  it('validates every relationship before replacing the database', async () => { const payload = { formatVersion: 1 as const, athletes: SYNTHETIC_ATHLETES, sessions: SYNTHETIC_SESSIONS, measurements: SYNTHETIC_MEASUREMENTS, standards: [STARTER_STANDARDS] }; expect(validateBackup(payload).sessions).toHaveLength(2); const corrupt = structuredClone(payload); corrupt.measurements[0].athleteId = 'missing'; expect(() => validateBackup(corrupt)).toThrow('measurement references'); const name = `restore-${crypto.randomUUID()}`; names.push(name); const database = new FieldhouseDatabase(name); const summary = await restoreBackup(payload, database); expect(summary.athletes).toBe(6); expect(await database.measurements.count()).toBe(SYNTHETIC_MEASUREMENTS.length); database.close() })
 })

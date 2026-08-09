@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { bestAttempt, scoreAssessment, scoreMetric } from './scoring'
+import { bestAttempt, isMetricValueValid, scoreAssessment, scoreMetric } from './scoring'
 import { STARTER_STANDARDS } from './standards'
 import type { Measurement } from './types'
 
@@ -19,10 +19,18 @@ describe('versioned deterministic scoring', () => {
     expect(scoreMetric(metric('ten-yard'), 2).points).toBe(20)
     expect(bestAttempt(metric('ten-yard'), [1.82, 1.76])).toBe(1.76)
   })
+  it('uses metric-specific validation ranges', () => {
+    expect(isMetricValueValid(metric('ten-yard'), 1.8)).toBe(true)
+    expect(isMetricValueValid(metric('ten-yard'), 12)).toBe(false)
+    expect(isMetricValueValid(metric('vertical-jump'), 59.9)).toBe(true)
+    expect(isMetricValueValid(metric('vertical-jump'), 61)).toBe(false)
+    expect(bestAttempt(metric('vertical-jump'), [24, 100, 23])).toBe(24)
+  })
   it('never allocates missing required metric weight', () => {
     const partial = STARTER_STANDARDS.metrics.slice(0, 4).map((item) => measurement('ath-a', item.id, item.direction === 'higher' ? 25 : 1.8))
     expect(scoreAssessment(STARTER_STANDARDS, partial, 'ath-a')).toMatchObject({ complete: false, overall: null, standardsVersion: '1.0.0' })
   })
+  it('treats an out-of-range required result as incomplete even if its stored status says valid', () => { const rows = STARTER_STANDARDS.metrics.map((item) => measurement('ath-a', item.id, item.id === 'ten-yard' ? 12 : item.direction === 'higher' ? 25 : 4)); expect(scoreAssessment(STARTER_STANDARDS, rows, 'ath-a').overall).toBeNull() })
   it('isolates measurements by athlete identity', () => {
     const exceptional: Record<string, number> = { 'vertical-jump': 30, 'broad-jump': 114, 'ten-yard': 1, 'pro-agility': 4, 'bench-reps': 20 }
     const a = STARTER_STANDARDS.metrics.map((item) => measurement('ath-a', item.id, exceptional[item.id]))

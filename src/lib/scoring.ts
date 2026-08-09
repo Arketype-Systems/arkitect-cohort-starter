@@ -14,7 +14,7 @@ export function scoreAssessment(version: StandardsVersion, measurements: Measure
   const valid = measurements.filter((m) => m.athleteId === athleteId && m.status === 'valid' && m.selectedAttempt !== null)
   const scores = version.metrics.flatMap((metric) => {
     const result = valid.find((m) => m.metricId === metric.id)
-    return result?.selectedAttempt === null || result?.selectedAttempt === undefined ? [] : [scoreMetric(metric, result.selectedAttempt)]
+    return result?.selectedAttempt === null || result?.selectedAttempt === undefined || !isMetricValueValid(metric, result.selectedAttempt) ? [] : [scoreMetric(metric, result.selectedAttempt)]
   })
   const missing = version.metrics.filter((metric) => metric.required && !scores.some((score) => score.metric.id === metric.id)).map((metric) => metric.name)
   if (missing.length) return { complete: false as const, overall: null, scores, missing, standardsVersion: version.version }
@@ -26,5 +26,11 @@ export function scoreAssessment(version: StandardsVersion, measurements: Measure
 export function bestAttempt(metric: MetricStandard, attempts: Array<number | null>): number | null {
   const values = attempts.filter((value): value is number => value !== null && Number.isFinite(value))
   if (!values.length) return null
-  return metric.direction === 'higher' ? Math.max(...values) : Math.min(...values)
+  const validValues = values.filter((value) => isMetricValueValid(metric, value))
+  if (!validValues.length) return values[0]
+  return metric.direction === 'higher' ? Math.max(...validValues) : Math.min(...validValues)
+}
+
+export function isMetricValueValid(metric: MetricStandard, value: number | null): boolean {
+  return value !== null && Number.isFinite(value) && value >= metric.validMin && value <= metric.validMax
 }

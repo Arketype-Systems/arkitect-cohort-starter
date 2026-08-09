@@ -2,7 +2,7 @@ import type { Athlete, AthleteReport, AssessmentSession, Measurement, StandardsV
 import { scoreAssessment } from './scoring'
 
 export function deriveAthleteReport(athlete: Athlete, sessions: AssessmentSession[], measurements: Measurement[], version: StandardsVersion): AthleteReport {
-  const athleteSessions = sessions.filter((session) => session.athleteIds.includes(athlete.id) && session.status === 'published').sort((a, b) => b.date.localeCompare(a.date))
+  const athleteSessions = sessions.filter((session) => session.athleteIds.includes(athlete.id) && session.status === 'published').sort((a, b) => b.date.localeCompare(a.date) || (b.publishedAt ?? b.updatedAt).localeCompare(a.publishedAt ?? a.updatedAt))
   const latestSession = athleteSessions[0]
   const latestMeasurements = latestSession ? measurements.filter((measurement) => measurement.sessionId === latestSession.id && measurement.athleteId === athlete.id) : []
   const result = scoreAssessment(version, latestMeasurements, athlete.id)
@@ -14,4 +14,13 @@ export function reportToCsv(report: AthleteReport) {
   const header = 'athlete_id,athlete_name,assessment_date,metric,value,unit,score,band,standards_version'
   const rows = report.scores.map((score) => [report.athlete.id, `"${report.athlete.firstName} ${report.athlete.lastName}"`, report.latestSession?.date ?? '', `"${score.metric.name}"`, score.value, score.metric.unit, score.points, score.band.label, report.version.version].join(','))
   return [header, ...rows].join('\n')
+}
+
+export function resolveReportVersion(athleteId: string, sessions: AssessmentSession[], versions: StandardsVersion[]): StandardsVersion | undefined {
+  const latest = sessions.filter((session) => session.status === 'published' && session.athleteIds.includes(athleteId)).sort((a, b) => b.date.localeCompare(a.date) || (b.publishedAt ?? b.updatedAt).localeCompare(a.publishedAt ?? a.updatedAt))[0]
+  return versions.find((version) => version.id === latest?.standardsVersionId)
+}
+
+export function latestStandardsVersion(versions: StandardsVersion[]): StandardsVersion | undefined {
+  return [...versions].sort((a, b) => b.effectiveDate.localeCompare(a.effectiveDate) || b.version.localeCompare(a.version))[0]
 }
