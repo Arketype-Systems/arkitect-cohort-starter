@@ -40,6 +40,8 @@ The command validates the versioned handoff package and writes private local con
 
 The importer does not sign in to the cohort, call an Arketype service, invent a missing manifest, or alter your coaching decisions. It only reads the authenticated export you downloaded. Run the command again whenever you download a newer handoff. A successful import replaces the previous local context atomically.
 
+Importing is local and makes no network request. Asking Codex or Claude Code to read selected context files is a separate disclosure to that provider under your account and its terms. Review `data-boundary.json` and the export before proceeding. Structured athlete rows are excluded, but coach-entered free text may still contain sensitive material.
+
 The status command gives the package one of three readiness states without printing coach-authored notes or private identifiers:
 
 - **Ready** means a current committed manifest exists. A coding agent may propose a bounded implementation from that manifest, then wait for approval.
