@@ -85,18 +85,43 @@ export function resolveStandardsProfile(version: StandardsVersion, athlete: Athl
 
 export function bandsForMetric(profile: StandardsProfile, metricId: string, fallback: ScoreBand[]): ScoreBand[] { return profile.bandsByMetric[metricId] ?? fallback }
 
+export function duplicateStandardsMetric(version: StandardsVersion, sourceMetricId: string, metricId: string): StandardsVersion {
+  const next = structuredClone(version)
+  const source = next.metrics.find((metric) => metric.id === sourceMetricId)
+  if (!source) throw new Error('The test selected for duplication is unavailable.')
+  if (!metricId.trim() || next.metrics.some((metric) => metric.id === metricId)) throw new Error('The new test needs a unique identity.')
+  const metric = { ...structuredClone(source), id: metricId, name: `${source.name} copy`, shortName: `${source.shortName} copy`, weight: 0 }
+  next.metrics.push(metric)
+  next.profiles = next.profiles.map((profile) => ({ ...profile, bandsByMetric: { ...profile.bandsByMetric, [metricId]: structuredClone(bandsForMetric(profile, source.id, source.bands)) } }))
+  return next
+}
+
+export function removeStandardsMetric(version: StandardsVersion, metricId: string): StandardsVersion {
+  if (version.metrics.length === 1) throw new Error('A standards version must keep at least one test.')
+  if (!version.metrics.some((metric) => metric.id === metricId)) throw new Error('The test selected for removal is unavailable.')
+  const next = structuredClone(version)
+  next.metrics = next.metrics.filter((metric) => metric.id !== metricId)
+  next.profiles = next.profiles.map((profile) => {
+    const bandsByMetric = { ...profile.bandsByMetric }
+    delete bandsByMetric[metricId]
+    return { ...profile, bandsByMetric }
+  })
+  return next
+}
+
 export function validateStandardsVersion(version: StandardsVersion): string[] {
   const errors: string[] = []
   if (!version.version.trim()) errors.push('A version number is required.')
   if (!version.name.trim()) errors.push('A standard name is required.')
   if (!version.metrics.length) errors.push('At least one metric is required.')
+  if (version.metrics.length && !version.metrics.some((metric) => metric.required)) errors.push('At least one test must be required for the point total.')
   if (!version.profiles?.length) errors.push('At least one standards profile is required.')
   if (new Set(version.metrics.map((metric) => metric.id)).size !== version.metrics.length || version.metrics.some((metric) => !metric.id.trim())) errors.push('Every metric needs a unique nonempty ID.')
   if (new Set((version.profiles ?? []).map((profile) => profile.id)).size !== (version.profiles ?? []).length || (version.profiles ?? []).some((profile) => !profile.id.trim())) errors.push('Every standards profile needs a unique nonempty ID.')
   if (version.profiles && !version.profiles.some((profile) => !profile.audience.sexes.length && profile.audience.ageMin === undefined && profile.audience.ageMax === undefined && !profile.audience.grades.length && !profile.audience.sports.length && !profile.audience.positions.length)) errors.push('A general fallback standards profile is required.')
-  if (version.metrics.reduce((sum, metric) => sum + metric.weight, 0) !== 100) errors.push('Metric weights must total 100 percent.')
   for (const metric of version.metrics) {
-    if (!metric.name.trim() || !metric.unit.trim()) errors.push(`${metric.id} needs a name and unit.`)
+    if (!metric.name.trim() || !metric.shortName.trim() || !metric.unit.trim()) errors.push(`${metric.id} needs a name, short label, and unit.`)
+    if (!Number.isInteger(metric.attempts) || metric.attempts < 1) errors.push(`${metric.name || metric.id} needs at least one attempt.`)
     if (!Number.isFinite(metric.validMin) || !Number.isFinite(metric.validMax) || metric.validMin > metric.validMax) errors.push(`${metric.name} needs a valid minimum and maximum.`)
     const bandSets = [{ name: 'Default metric bands', bands: metric.bands }, ...(version.profiles ?? []).map((profile) => ({ name: profile.name, bands: profile.bandsByMetric[metric.id] ?? [] }))]
     for (const bandSet of bandSets) {

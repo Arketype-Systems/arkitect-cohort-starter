@@ -117,16 +117,16 @@ There is intentionally no silent cloud backup. Treat exported JSON files as sens
 The included `Editable U.S. S&C Starter Battery` uses five synthetic performance bands per metric. It demonstrates inches, seconds, and repetitions commonly used in United States strength and conditioning settings. It is not a validated population norm.
 
 - Each metric awards exactly 0, 1, 2, 3, or 4 points and declares whether higher or lower is better.
-- An athlete point total is the sum of the five metric grades. The included battery therefore has a maximum of 20 points.
+- An athlete point total is the sum of every required metric grade. The included five-test battery therefore has a maximum of 20 points. Adding or removing required tests changes that maximum by four points per test.
 - Boundaries are half open and deterministic.
 - Standards profiles can target sex, age range, grade, sport, and position. Blank fields mean any value. Priority resolves intentional overlaps.
 - The resolved profile is pinned per athlete when a session opens. Later roster or standards edits cannot silently change that session's scoring contract.
 - Every score names both the standards version and standards profile.
 - Every required metric must be valid before an overall score exists.
-- Missing or excluded required results return **Incomplete**. Weight is never redistributed.
+- Missing or excluded required results return **Incomplete**. Points are never estimated or reallocated.
 - Reports filter measurements by both athlete ID and session ID. They never borrow another athlete’s result.
 
-Use **Standards → Edit this test** for a focused revision or **Edit full protocol** for batteries and audience profiles. Saving always creates an append-only version. Add as many audience profiles as needed, then edit the five metric bands inside each profile. Existing sessions and reports remain attached to their exact original version and pinned athlete profile. The editor rejects weight drift, invalid ranges, band gaps, band overlaps, missing fallback profiles, points outside 0 through 4, and points that are reversed for the declared scoring direction. The bundled default remains in `src/lib/standards.ts`; update the explicit fixtures in `src/lib/scoring.test.ts` if a developer intentionally changes that seed.
+Use **Standards → Edit this test** for a focused revision or **Edit full protocol** for the complete test battery and audience profiles. The full protocol editor can add a test by copying the selected protocol, remove a test from the new revision, and edit each test's name, short label, unit, direction, attempts, required status, valid range, interpretation note, and five scoring bands. Saving always creates an append-only version. Existing sessions and reports remain attached to their exact original version and pinned athlete profile. The editor rejects invalid ranges, band gaps, band overlaps, missing fallback profiles, points outside 0 through 4, and points that are reversed for the declared scoring direction. The bundled default remains in `src/lib/standards.ts`; update the explicit fixtures in `src/lib/scoring.test.ts` if a developer intentionally changes that seed.
 
 ## Coach branding and redesign
 

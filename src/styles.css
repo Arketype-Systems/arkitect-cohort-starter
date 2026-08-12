@@ -161,3 +161,7 @@ th{color:#64757d;background:#f4f7f8}th,td{border-color:#e0e6e8}tbody tr:hover{ba
 .profile-contract{grid-template-columns:repeat(4,1fr)}
 @media(max-width:800px){.profile-contract{grid-template-columns:1fr}}
 @media(max-width:650px){.archetype-records>article{grid-template-columns:1fr auto}.archetype-record-count{grid-row:2}.archetype-manager .section-heading{display:grid}.archetype-manager .section-heading .button{width:100%}}
+
+.battery-editor-heading{margin:20px 4px 14px;padding:16px;background:#eaf2f3;border:1px solid #cbdadc}.battery-editor-heading p:last-child{font-size:10px;line-height:1.5;color:var(--muted);margin-top:5px}.editor-metric textarea{width:100%;min-height:72px;resize:vertical;border:1px solid #cbd5d9;border-radius:3px;background:#fff;color:var(--ink);font:inherit;padding:9px}.editor-metric-grid .wide{grid-column:1/-1}.editor-metric-grid .checkbox-field{display:flex;align-items:center;align-self:end;gap:8px;min-height:36px;color:var(--ink)}.editor-metric-grid .checkbox-field input{width:17px;min-height:17px;height:17px;margin:0}.editor-metric-heading .text-button:disabled{opacity:.45;cursor:not-allowed}
+@media(max-width:800px){.battery-editor-heading{align-items:flex-start}.editor-metric-grid .wide{grid-column:1/-1}}
+@media(max-width:520px){.battery-editor-heading{display:grid;margin-left:0;margin-right:0}.battery-editor-heading .button{width:100%}.editor-metric-heading{align-items:flex-start}.editor-metric-heading .profile-editor-actions{align-items:flex-end;display:grid;justify-items:end}}

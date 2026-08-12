@@ -26,9 +26,17 @@ describe('versioned deterministic scoring', () => {
     expect(isMetricValueValid(metric('vertical-jump'), 61)).toBe(false)
     expect(bestAttempt(metric('vertical-jump'), [24, 100, 23])).toBe(24)
   })
-  it('never allocates missing required metric weight', () => {
+  it('never allocates points for a missing required metric', () => {
     const partial = STARTER_STANDARDS.metrics.slice(0, 4).map((item) => measurement('ath-a', item.id, item.direction === 'higher' ? 25 : 1.8))
     expect(scoreAssessment(STARTER_STANDARDS, partial, 'ath-a')).toMatchObject({ complete: false, overall: null, standardsVersion: '1.0.0' })
+  })
+  it('reports optional tests without adding them to the required point total', () => {
+    const version = structuredClone(STARTER_STANDARDS)
+    version.metrics[4].required = false
+    const rows = version.metrics.map((item) => measurement('ath-a', item.id, item.direction === 'higher' ? item.validMax : item.validMin))
+    const result = scoreAssessment(version, rows, 'ath-a')
+    expect(result).toMatchObject({ complete: true, overall: 16, maxPoints: 16 })
+    expect(result.scores).toHaveLength(5)
   })
   it('treats an out-of-range required result as incomplete even if its stored status says valid', () => { const rows = STARTER_STANDARDS.metrics.map((item) => measurement('ath-a', item.id, item.id === 'ten-yard' ? 12 : item.direction === 'higher' ? 25 : 4)); expect(scoreAssessment(STARTER_STANDARDS, rows, 'ath-a').overall).toBeNull() })
   it('isolates measurements by athlete identity', () => {
