@@ -20,9 +20,10 @@ export function scoreAssessment(version: StandardsVersion, measurements: Measure
     return result?.selectedAttempt === null || result?.selectedAttempt === undefined || !isMetricValueValid(metric, result.selectedAttempt) ? [] : [scoreMetric(metric, result.selectedAttempt, bands)]
   })
   const missing = version.metrics.filter((metric) => metric.required && !scores.some((score) => score.metric.id === metric.id)).map((metric) => metric.name)
-  const maxPoints = version.metrics.length * 4
+  const requiredScores = scores.filter((score) => score.metric.required)
+  const maxPoints = version.metrics.filter((metric) => metric.required).length * 4
   if (missing.length) return { complete: false as const, overall: null, maxPoints, scores, missing, standardsVersion: version.version, profile }
-  const overall = scores.reduce((sum, score) => sum + score.points, 0)
+  const overall = requiredScores.reduce((sum, score) => sum + score.points, 0)
   return { complete: true as const, overall, maxPoints, scores, missing: [], standardsVersion: version.version, profile }
 }
 
