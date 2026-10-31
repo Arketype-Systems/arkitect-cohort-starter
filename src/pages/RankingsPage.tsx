@@ -1,22 +1,304 @@
-import { Filter, Trophy } from 'lucide-react'
-import { useMemo, useState, type ReactNode } from 'react'
-import { Link } from 'react-router-dom'
-import { PageHeader } from '../components/ui'
-import { deriveAthleteReport, latestStandardsVersion, resolveReportVersion } from '../lib/report'
-import { athleteAgeOn } from '../lib/standards'
-import { useData } from '../lib/useData'
+import { Filter, Trophy } from "lucide-react";
+import { useMemo, useState, type ReactNode } from "react";
+import { Link } from "react-router-dom";
+import { PageHeader, Notice } from "../components/ui";
+import { latestStandardsVersion } from "../lib/report";
+import { useReports } from "../lib/useReports";
+import { athleteAgeOn } from "../lib/standards";
+import { useData } from "../lib/useData";
 
 export default function RankingsPage() {
-  const { athletes, sessions, measurements, standards, archetypes } = useData(); const [rankMode, setRankMode] = useState('points'); const [archetypeId, setArchetypeId] = useState('all'); const [sex, setSex] = useState('all'); const [ageGroup, setAgeGroup] = useState('all'); const [sport, setSport] = useState('all'); const [position, setPosition] = useState('all'); const [grade, setGrade] = useState('all'); const latest = latestStandardsVersion(standards)
-  const reports = useMemo(() => athletes.flatMap((athlete) => { const version = resolveReportVersion(athlete.id, sessions, standards) ?? latest; return version ? [deriveAthleteReport(athlete, sessions, measurements, version, athletes, archetypes)] : [] }), [archetypes, athletes, latest, measurements, sessions, standards])
-  const sports = [...new Set(athletes.flatMap((athlete) => athlete.sports))].sort(); const positions = [...new Set(athletes.flatMap((athlete) => athlete.positions))].sort(); const grades = [...new Set(athletes.map((athlete) => athlete.grade).filter(Boolean))].sort()
-  const filtered = reports.filter((report) => { const age = athleteAgeOn(report.athlete.dateOfBirth, report.latestSession?.date ?? new Date().toISOString().slice(0, 10)); const ageMatches = ageGroup === 'all' || (ageGroup === 'under14' && age !== null && age < 14) || (ageGroup === '14-15' && age !== null && age >= 14 && age <= 15) || (ageGroup === '16-18' && age !== null && age >= 16 && age <= 18) || (ageGroup === '19plus' && age !== null && age >= 19); return ageMatches && (archetypeId === 'all' || report.archetype?.id === archetypeId) && (sex === 'all' || report.athlete.sex === sex) && (sport === 'all' || report.athlete.sports.includes(sport)) && (position === 'all' || report.athlete.positions.includes(position)) && (grade === 'all' || report.athlete.grade === grade) })
-  const selectedMetric = latest?.metrics.find((metric) => metric.id === rankMode)
-  const ranked = filtered.filter((report) => rankMode === 'points' ? report.complete && report.overall !== null : report.scores.some((score) => score.metric.id === rankMode)).sort((a, b) => { if (rankMode === 'points') return (b.overall ?? -1) - (a.overall ?? -1); const av = a.scores.find((score) => score.metric.id === rankMode)?.value; const bv = b.scores.find((score) => score.metric.id === rankMode)?.value; if (av === undefined) return 1; if (bv === undefined) return -1; return selectedMetric?.direction === 'lower' ? av - bv : bv - av })
-  return <div className="page rankings-page"><PageHeader eyebrow="Leaderboards" title="Rankings" description="Rank published outcomes after choosing a database archetype or athlete filters. Archetype definitions are managed in Database." actions={<Link className="button secondary" to="/database#archetypes">Manage archetypes</Link>} />
-    <section className="panel ranking-controls"><div className="ranking-control-title"><Filter size={18} /><div><strong>Ranking cohort</strong><span>{ranked.length} athletes eligible</span></div></div><RankingSelect label="Rank by" value={rankMode} set={setRankMode}><option value="points">Point total</option>{latest?.metrics.map((metric) => <option key={metric.id} value={metric.id}>{metric.name}</option>)}</RankingSelect><RankingSelect label="Archetype" value={archetypeId} set={setArchetypeId}><option value="all">All archetypes</option>{archetypes.filter((item) => item.active).map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</RankingSelect><RankingSelect label="Sex" value={sex} set={setSex}><option value="all">All</option><option value="female">Female</option><option value="male">Male</option><option value="unspecified">Unspecified</option></RankingSelect><RankingSelect label="Age group" value={ageGroup} set={setAgeGroup}><option value="all">All ages</option><option value="under14">Under 14</option><option value="14-15">14 to 15</option><option value="16-18">16 to 18</option><option value="19plus">19 and older</option></RankingSelect><RankingSelect label="Sport" value={sport} set={setSport}><option value="all">All sports</option>{sports.map((value) => <option key={value}>{value}</option>)}</RankingSelect><RankingSelect label="Position" value={position} set={setPosition}><option value="all">All positions</option>{positions.map((value) => <option key={value}>{value}</option>)}</RankingSelect><RankingSelect label="Grade" value={grade} set={setGrade}><option value="all">All grades</option>{grades.map((value) => <option key={value}>{value}</option>)}</RankingSelect></section>
-    <section className="panel leaderboard-panel"><div className="section-heading"><div><p className="eyebrow"><Trophy size={14} />Published results</p><h2>{rankMode === 'points' ? 'Point total leaderboard' : selectedMetric?.name}</h2></div><span>{selectedMetric ? `${selectedMetric.direction === 'lower' ? 'Lowest' : 'Highest'} valid result ranks first` : 'Complete totals only'}</span></div><div className="table-scroll"><table><thead><tr><th>Rank</th><th>Athlete</th><th>Comparison archetype</th><th>Age / Grade</th><th>{rankMode === 'points' ? 'Points' : 'Result'}</th><th>Report</th></tr></thead><tbody>{ranked.map((report, index) => { const score = report.scores.find((item) => item.metric.id === rankMode); return <tr key={report.athlete.id}><td><span className={`rank-number rank-${index + 1}`}>{index + 1}</span></td><td><strong>{report.athlete.firstName} {report.athlete.lastName}</strong><small>{report.athlete.sport} · {report.athlete.position}</small></td><td>{report.archetype?.name ?? 'Not matched'}</td><td>{athleteAgeOn(report.athlete.dateOfBirth, report.latestSession?.date ?? '') ?? '—'} / {report.athlete.grade || '—'}</td><td><strong>{rankMode === 'points' ? `${report.overall}/${report.maxPoints}` : score ? `${score.value} ${score.metric.unit}` : 'No result'}</strong></td><td><Link to={`/reporting/${report.athlete.id}`}>Open</Link></td></tr> })}</tbody></table></div>{!ranked.length && <p className="muted">No published result matches every selected filter.</p>}</section>
-  </div>
+  const data = useData();
+  const { athletes, sessions, standards, archetypes } = data;
+  const index = useReports(data);
+  const [versionId, setVersionId] = useState("");
+  const [rankMode, setRankMode] = useState("points");
+  const [archetypeId, setArchetypeId] = useState("all");
+  const [sex, setSex] = useState("all");
+  const [ageGroup, setAgeGroup] = useState("all");
+  const [sport, setSport] = useState("all");
+  const [position, setPosition] = useState("all");
+  const [grade, setGrade] = useState("all");
+  const latest =
+    standards.find((item) => item.id === versionId) ??
+    standards.find(
+      (item) =>
+        item.id ===
+        [...sessions]
+          .filter((session) => session.status === "published")
+          .sort((a, b) => b.date.localeCompare(a.date))[0]?.standardsVersionId,
+    ) ??
+    latestStandardsVersion(standards);
+  const reports = useMemo(
+    () =>
+      athletes
+        .filter((athlete) => !athlete.archivedAt)
+        .flatMap((athlete) => {
+          const session = index.sessionsByAthlete
+            .get(athlete.id)
+            ?.find((item) => item.standardsVersionId === latest?.id);
+          return session ? [index.reportFor(athlete, session.id)] : [];
+        }),
+    [athletes, index, latest],
+  );
+
+  const sports = [
+    ...new Set(athletes.flatMap((athlete) => athlete.sports)),
+  ].sort();
+  const positions = [
+    ...new Set(athletes.flatMap((athlete) => athlete.positions)),
+  ].sort();
+  const grades = [
+    ...new Set(athletes.map((athlete) => athlete.grade).filter(Boolean)),
+  ].sort();
+  const filtered = reports.filter((report) => {
+    const age = athleteAgeOn(
+      report.athlete.dateOfBirth,
+      report.latestSession?.date ?? new Date().toISOString().slice(0, 10),
+    );
+    const ageMatches =
+      ageGroup === "all" ||
+      (ageGroup === "under14" && age !== null && age < 14) ||
+      (ageGroup === "14-15" && age !== null && age >= 14 && age <= 15) ||
+      (ageGroup === "16-18" && age !== null && age >= 16 && age <= 18) ||
+      (ageGroup === "19plus" && age !== null && age >= 19);
+    return (
+      ageMatches &&
+      (archetypeId === "all" || report.archetype?.id === archetypeId) &&
+      (sex === "all" || report.athlete.sex === sex) &&
+      (sport === "all" || report.athlete.sports.includes(sport)) &&
+      (position === "all" || report.athlete.positions.includes(position)) &&
+      (grade === "all" || report.athlete.grade === grade)
+    );
+  });
+  const selectedMetric = latest?.metrics.find(
+    (metric) => metric.id === rankMode,
+  );
+  const ranked = filtered
+    .filter((report) =>
+      rankMode === "points"
+        ? report.complete && report.overall !== null
+        : report.scores.some((score) => score.metric.id === rankMode),
+    )
+    .sort((a, b) => {
+      if (rankMode === "points") return (b.overall ?? -1) - (a.overall ?? -1);
+      const av = a.scores.find((score) => score.metric.id === rankMode)?.value;
+      const bv = b.scores.find((score) => score.metric.id === rankMode)?.value;
+      if (av === undefined) return 1;
+      if (bv === undefined) return -1;
+      return selectedMetric?.direction === "lower" ? av - bv : bv - av;
+    });
+  return (
+    <div className="page rankings-page">
+      <PageHeader
+        eyebrow="Leaderboards"
+        title="Rankings"
+        description="Compare the latest published results within one standards version. Use group filters to define the roster you want to compare."
+        actions={
+          <Link className="button secondary" to="/comparisons">
+            Manage archetypes
+          </Link>
+        }
+      />
+      <section className="panel ranking-controls">
+        <div className="ranking-control-title">
+          <Filter size={18} />
+          <div>
+            <strong>Ranking cohort</strong>
+            <span>{ranked.length} athletes eligible</span>
+          </div>
+        </div>
+        <RankingSelect
+          label="Standards version"
+          value={latest?.id ?? ""}
+          set={(value) => {
+            setVersionId(value);
+            setRankMode("points");
+          }}
+        >
+          {standards.map((item) => (
+            <option key={item.id} value={item.id}>
+              {item.name} · v{item.version}
+            </option>
+          ))}
+        </RankingSelect>
+        <RankingSelect label="Rank by" value={rankMode} set={setRankMode}>
+          <option value="points">Point total</option>
+          {latest?.metrics.map((metric) => (
+            <option key={metric.id} value={metric.id}>
+              {metric.name}
+            </option>
+          ))}
+        </RankingSelect>
+        <RankingSelect
+          label="Archetype"
+          value={archetypeId}
+          set={setArchetypeId}
+        >
+          <option value="all">All archetypes</option>
+          {archetypes
+            .filter((item) => item.active)
+            .map((item) => (
+              <option key={item.id} value={item.id}>
+                {item.name}
+              </option>
+            ))}
+        </RankingSelect>
+        <RankingSelect label="Sex" value={sex} set={setSex}>
+          <option value="all">All</option>
+          <option value="female">Female</option>
+          <option value="male">Male</option>
+          <option value="unspecified">Unspecified</option>
+        </RankingSelect>
+        <RankingSelect label="Age group" value={ageGroup} set={setAgeGroup}>
+          <option value="all">All ages</option>
+          <option value="under14">Under 14</option>
+          <option value="14-15">14 to 15</option>
+          <option value="16-18">16 to 18</option>
+          <option value="19plus">19 and older</option>
+        </RankingSelect>
+        <RankingSelect label="Sport" value={sport} set={setSport}>
+          <option value="all">All sports</option>
+          {sports.map((value) => (
+            <option key={value}>{value}</option>
+          ))}
+        </RankingSelect>
+        <RankingSelect label="Position" value={position} set={setPosition}>
+          <option value="all">All positions</option>
+          {positions.map((value) => (
+            <option key={value}>{value}</option>
+          ))}
+        </RankingSelect>
+        <RankingSelect label="Grade" value={grade} set={setGrade}>
+          <option value="all">All grades</option>
+          {grades.map((value) => (
+            <option key={value}>{value}</option>
+          ))}
+        </RankingSelect>
+      </section>
+      <Notice>
+        {reports.length} of{" "}
+        {athletes.filter((athlete) => !athlete.archivedAt).length} active
+        athletes have a published assessment in v{latest?.version}. Other
+        versions and athletes without a published result are excluded.
+      </Notice>
+      <section className="panel leaderboard-panel">
+        <div className="section-heading">
+          <div>
+            <p className="eyebrow">
+              <Trophy size={14} />
+              Published results
+            </p>
+            <h2>
+              {rankMode === "points"
+                ? "Point total leaderboard"
+                : selectedMetric?.name}
+            </h2>
+          </div>
+          <span>
+            {selectedMetric
+              ? `${selectedMetric.direction === "lower" ? "Lowest" : "Highest"} valid result ranks first`
+              : "Complete totals only"}
+          </span>
+        </div>
+        <div
+          className="table-scroll"
+          tabIndex={0}
+          role="region"
+          aria-label="Ranked assessment results"
+        >
+          <table>
+            <thead>
+              <tr>
+                <th>Rank</th>
+                <th>Athlete</th>
+                <th>Comparison archetype</th>
+                <th>Age / Grade</th>
+                <th>{rankMode === "points" ? "Points" : "Result"}</th>
+                <th>Report</th>
+              </tr>
+            </thead>
+            <tbody>
+              {ranked.map((report, index) => {
+                const score = report.scores.find(
+                  (item) => item.metric.id === rankMode,
+                );
+                return (
+                  <tr key={report.athlete.id}>
+                    <td>
+                      <span className={`rank-number rank-${index + 1}`}>
+                        {index + 1}
+                      </span>
+                    </td>
+                    <td>
+                      <strong>
+                        {report.athlete.firstName} {report.athlete.lastName}
+                      </strong>
+                      <small>
+                        {report.athlete.sport} · {report.athlete.position}
+                      </small>
+                    </td>
+                    <td>{report.archetype?.name ?? "Not matched"}</td>
+                    <td>
+                      {athleteAgeOn(
+                        report.athlete.dateOfBirth,
+                        report.latestSession?.date ?? "",
+                      ) ?? "—"}{" "}
+                      / {report.athlete.grade || "—"}
+                    </td>
+                    <td>
+                      <strong>
+                        {rankMode === "points"
+                          ? `${report.overall}/${report.maxPoints}`
+                          : score
+                            ? `${score.value} ${score.metric.unit}`
+                            : "No result"}
+                      </strong>
+                    </td>
+                    <td>
+                      <Link
+                        to={`/reporting/${report.athlete.id}?session=${report.latestSession?.id}`}
+                      >
+                        Open
+                      </Link>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+        {!ranked.length && (
+          <p className="muted">
+            No published result matches every selected filter.
+          </p>
+        )}
+      </section>
+    </div>
+  );
 }
 
-function RankingSelect({ label, value, set, children }: { label: string; value: string; set: (value: string) => void; children: ReactNode }) { return <label>{label}<select aria-label={label} value={value} onChange={(event) => set(event.target.value)}>{children}</select></label> }
+function RankingSelect({
+  label,
+  value,
+  set,
+  children,
+}: {
+  label: string;
+  value: string;
+  set: (value: string) => void;
+  children: ReactNode;
+}) {
+  return (
+    <label>
+      {label}
+      <select
+        aria-label={label}
+        value={value}
+        onChange={(event) => set(event.target.value)}
+      >
+        {children}
+      </select>
+    </label>
+  );
+}

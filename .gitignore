@@ -6,4 +6,8 @@ test-results
 .DS_Store
 *.log
 *.tsbuildinfo
-.arkitect/studio-context/
+.arkitect/
+.vercel/
+.env
+.env.*
+!.env.example

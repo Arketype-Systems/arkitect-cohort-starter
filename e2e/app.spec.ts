@@ -1,297 +1,499 @@
-import { expect, test } from '@playwright/test'
+import { expect, test } from "@playwright/test";
 
-test('real routes, deep links, history, and navigation work', async ({ page }) => {
-  await page.goto('/athletes/ath-a')
-  await expect(page.getByRole('heading', { name: 'Jordan Ellis', level: 1 })).toBeVisible()
-  await page.reload()
-  await expect(page).toHaveURL(/\/athletes\/ath-a$/)
-  if ((page.viewportSize()?.width ?? 1000) <= 800) await page.getByRole('button', { name: 'Open navigation' }).click()
-  await page.getByRole('link', { name: 'Testing' }).click()
-  await expect(page).toHaveURL(/\/testing$/)
-  await page.goBack()
-  await expect(page).toHaveURL(/\/athletes\/ath-a$/)
-})
+// Keep synthetic age/date assertions stable as the starter is reused later.
+test.beforeEach(async ({ page }) => {
+  await page.clock.setFixedTime(new Date("2026-10-30T16:00:00Z"));
+});
 
-test('live result autosaves to IndexedDB and survives reload', async ({ page }) => {
-  await page.goto('/testing/session-draft/live')
-  const input = page.getByLabel('Countermovement Vertical Jump attempt 1')
-  await input.fill('24.5')
-  await page.waitForTimeout(100)
-  await page.reload()
-  await expect(input).toHaveValue('24.5')
-})
+test("real routes, deep links, history, and navigation work", async ({
+  page,
+}) => {
+  await page.goto("/athletes/ath-a");
+  await expect(
+    page.getByRole("heading", { name: "Jordan Ellis", level: 1 }),
+  ).toBeVisible();
+  await page.reload();
+  await expect(page).toHaveURL(/\/athletes\/ath-a$/);
+  if ((page.viewportSize()?.width ?? 1000) <= 800)
+    await page.getByRole("button", { name: "Open navigation" }).click();
+  await page.getByRole("link", { name: "Testing" }).click();
+  await expect(page).toHaveURL(/\/testing$/);
+  await page.goBack();
+  await expect(page).toHaveURL(/\/athletes\/ath-a$/);
+});
 
-test('required pages have no viewport overflow', async ({ page }, testInfo) => {
-  const routes = ['/', '/athletes', '/testing', '/testing/new', '/testing/session-draft/live', '/testing/session-complete/review', '/database', '/standards', '/reporting', '/reporting/ath-a', '/rankings', '/settings']
+test("live result autosaves to IndexedDB and survives reload", async ({
+  page,
+}) => {
+  await page.goto("/testing/session-draft/live");
+  const input = page.getByLabel("Countermovement Vertical Jump attempt 1");
+  await input.fill("24.5");
+  await page.waitForTimeout(100);
+  await page.reload();
+  await expect(input).toHaveValue("24.5");
+});
+
+test("required pages have no viewport overflow", async ({ page }, testInfo) => {
+  const routes = [
+    "/",
+    "/athletes",
+    "/testing",
+    "/testing/new",
+    "/testing/session-draft/live",
+    "/testing/session-complete/review",
+    "/database",
+    "/standards",
+    "/reporting",
+    "/reporting/ath-a",
+    "/rankings",
+    "/settings",
+  ];
   for (const route of routes) {
-    await page.goto(route)
-    await expect(page.locator('body')).toBeVisible()
-    const overflow = await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth + 1)
-    expect(overflow, `horizontal overflow at ${route}`).toBe(false)
+    await page.goto(route);
+    await expect(page.locator("body")).toBeVisible();
+    await expect(page.getByRole("heading", { level: 1 }).first()).toBeVisible();
+    const overflow = await page.evaluate(
+      () =>
+        document.documentElement.scrollWidth >
+        document.documentElement.clientWidth + 1,
+    );
+    expect(overflow, `horizontal overflow at ${route}`).toBe(false);
   }
-  await page.goto('/testing/session-draft/live')
-  await expect(page.getByRole('main')).toHaveCount(1)
-  await page.screenshot({ path: `screenshots/live-${testInfo.project.name}.png`, fullPage: true })
-  await page.goto('/')
-  await page.screenshot({ path: `screenshots/dashboard-${testInfo.project.name}.png`, fullPage: true })
-  await page.goto('/reporting/ath-a')
-  await page.screenshot({ path: `screenshots/report-${testInfo.project.name}.png`, fullPage: true })
-  await page.goto('/rankings')
-  await page.screenshot({ path: `screenshots/rankings-${testInfo.project.name}.png`, fullPage: true })
-  await page.goto('/database#archetypes')
-  await page.screenshot({ path: `screenshots/database-${testInfo.project.name}.png`, fullPage: true })
-  await page.goto('/settings')
-  await page.screenshot({ path: `screenshots/settings-${testInfo.project.name}.png`, fullPage: true })
-  await page.goto('/standards')
-  await page.getByRole('tab', { name: /10 yard/ }).click()
-  await expect(page.getByRole('heading', { name: '10 Yard Sprint' })).toBeVisible()
-  await page.screenshot({ path: `screenshots/standards-${testInfo.project.name}.png`, fullPage: true })
-  await page.getByRole('button', { name: /Edit full protocol/ }).click()
-  await expect(page.getByRole('heading', { name: 'Edit full standards protocol' })).toBeVisible()
-  const editorOverflow = await page.locator('.standards-modal').evaluate((element) => element.scrollWidth > element.clientWidth + 1)
-  expect(editorOverflow, 'standards editor overflow').toBe(false)
-  await page.screenshot({ path: `screenshots/standards-editor-${testInfo.project.name}.png` })
-})
+  await page.goto("/testing/session-draft/live");
+  await expect(page.getByRole("main")).toHaveCount(1);
+  await expect(page.getByRole("heading", { level: 1 }).first()).toBeVisible();
+  await page.screenshot({
+    path: `screenshots/live-${testInfo.project.name}.png`,
+    fullPage: true,
+  });
+  await page.goto("/");
+  await expect(page.getByRole("heading", { level: 1 }).first()).toBeVisible();
+  await page.screenshot({
+    path: `screenshots/dashboard-${testInfo.project.name}.png`,
+    fullPage: true,
+  });
+  await page.goto("/reporting/ath-a");
+  await expect(page.getByRole("heading", { level: 1 }).first()).toBeVisible();
+  await page.screenshot({
+    path: `screenshots/report-${testInfo.project.name}.png`,
+    fullPage: true,
+  });
+  await page.goto("/rankings");
+  await expect(page.getByRole("heading", { level: 1 }).first()).toBeVisible();
+  await page.screenshot({
+    path: `screenshots/rankings-${testInfo.project.name}.png`,
+    fullPage: true,
+  });
+  await page.goto("/database#archetypes");
+  await expect(page.getByRole("heading", { level: 1 }).first()).toBeVisible();
+  await page.screenshot({
+    path: `screenshots/database-${testInfo.project.name}.png`,
+    fullPage: true,
+  });
+  await page.goto("/settings");
+  await expect(page.getByRole("heading", { level: 1 }).first()).toBeVisible();
+  await page.screenshot({
+    path: `screenshots/settings-${testInfo.project.name}.png`,
+    fullPage: true,
+  });
+  await page.goto("/standards");
+  await page.getByRole("tab", { name: /10 yard/ }).click();
+  await expect(
+    page.getByRole("heading", { name: "10 Yard Sprint" }),
+  ).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1 }).first()).toBeVisible();
+  await page.screenshot({
+    path: `screenshots/standards-${testInfo.project.name}.png`,
+    fullPage: true,
+  });
+  await page.getByRole("button", { name: /Edit full protocol/ }).click();
+  await expect(
+    page.getByRole("heading", { name: "Edit full standards protocol" }),
+  ).toBeVisible();
+  const editorOverflow = await page
+    .locator(".standards-modal")
+    .evaluate((element) => element.scrollWidth > element.clientWidth + 1);
+  expect(editorOverflow, "standards editor overflow").toBe(false);
+  await expect(page.getByRole("heading", { level: 1 }).first()).toBeVisible();
+  await page.screenshot({
+    path: `screenshots/standards-editor-${testInfo.project.name}.png`,
+  });
+});
 
-test('complete coach workflow creates, captures, publishes, locks, and reports one athlete', async ({ page }) => {
-  await page.goto('/testing/new')
-  await page.getByPlaceholder('Example: Fall baseline').fill('Acceptance Session')
-  await expect(page.getByText('5 selected')).toBeVisible()
-  await page.getByRole('button', { name: /Jordan Ellis/ }).click()
-  await page.getByRole('button', { name: /Open live intake/ }).click()
-  await expect(page).toHaveURL(/\/testing\/[^/]+\/live$/)
-  await page.getByLabel('Countermovement Vertical Jump attempt 1').fill('24')
-  await page.getByRole('tab', { name: /Broad jump/ }).click()
-  await page.getByLabel('Standing Broad Jump attempt 1').fill('96')
-  await page.getByRole('tab', { name: /10 yard/ }).click()
-  await page.getByLabel('10 Yard Sprint attempt 1').fill('1.8')
-  await page.getByRole('tab', { name: /Pro agility/ }).click()
-  await page.getByLabel('5-10-5 Pro Agility attempt 1').fill('4.7')
-  await page.getByRole('tab', { name: /Bench reps/ }).click()
-  await page.getByLabel('Bench Press Repetitions attempt 1').fill('12')
-  await page.getByRole('button', { name: /Review session/ }).click()
-  await expect(page.getByText('5 / 5')).toBeVisible()
-  const benchStatus = page.getByLabel('Jordan Ellis Bench Press Repetitions status')
-  await benchStatus.selectOption('excluded')
-  await expect(page.getByRole('button', { name: /Approve and publish/ })).toBeDisabled()
-  await benchStatus.selectOption('valid')
-  await page.getByRole('button', { name: /Approve and publish/ }).click()
-  await expect(page.getByText('Published locally.')).toBeVisible()
-  await page.getByRole('link', { name: /Open/ }).click()
-  await expect(page.getByRole('heading', { name: 'Jordan Ellis', level: 1 })).toBeVisible()
-  await expect(page.locator('.report-meta').getByText(/v1.0.0/).first()).toBeVisible()
-  await page.goto((await page.url()).replace(/\/reporting\/ath-a$/, '/testing'))
-  await page.locator('article').filter({ hasText: 'Acceptance Session' }).getByRole('link', { name: /View published session/ }).click()
-  await page.goto((await page.url()).replace(/\/review$/, '/live'))
-  await expect(page.getByText(/published and locked/i)).toBeVisible()
-})
+test("complete coach workflow creates, captures, publishes, locks, and reports one athlete", async ({
+  page,
+}) => {
+  await page.goto("/testing/new");
+  await page
+    .getByPlaceholder("Example: Fall baseline")
+    .fill("Acceptance Session");
+  await expect(page.getByText("5 selected")).toBeVisible();
+  await page.getByRole("button", { name: /Jordan Ellis/ }).click();
+  await page.getByRole("button", { name: /Open live intake/ }).click();
+  await expect(page).toHaveURL(/\/testing\/[^/]+\/live$/);
+  await page.getByLabel("Countermovement Vertical Jump attempt 1").fill("24");
+  await page.getByRole("tab", { name: /Broad jump/ }).click();
+  await page.getByLabel("Standing Broad Jump attempt 1").fill("96");
+  await page.getByRole("tab", { name: /10 yard/ }).click();
+  await page.getByLabel("10 Yard Sprint attempt 1").fill("1.8");
+  await page.getByRole("tab", { name: /Pro agility/ }).click();
+  await page.getByLabel("5-10-5 Pro Agility attempt 1").fill("4.7");
+  await page.getByRole("tab", { name: /Bench reps/ }).click();
+  await page.getByLabel("Bench Press Repetitions attempt 1").fill("12");
+  await page.getByRole("button", { name: /Review session/ }).click();
+  await expect(page.getByText("5 / 5")).toBeVisible();
+  const benchStatus = page.getByLabel(
+    "Jordan Ellis Bench Press Repetitions status",
+  );
+  await benchStatus.selectOption("excluded");
+  await expect(
+    page.getByRole("button", { name: /Approve and publish/ }),
+  ).toBeDisabled();
+  await benchStatus.selectOption("valid");
+  await page.getByRole("button", { name: /Approve and publish/ }).click();
+  await expect(page.getByText("Published locally.")).toBeVisible();
+  await page.getByRole("link", { name: /Open/ }).click();
+  await expect(
+    page.getByRole("heading", { name: "Jordan Ellis", level: 1 }),
+  ).toBeVisible();
+  await expect(
+    page
+      .locator(".report-meta")
+      .getByText(/v1.0.0/)
+      .first(),
+  ).toBeVisible();
+  await page.goto("/testing");
+  await page
+    .locator("article")
+    .filter({ hasText: "Acceptance Session" })
+    .getByRole("link", { name: /View published session/ })
+    .click();
+  await page.goto((await page.url()).replace(/\/review$/, "/live"));
+  await expect(page.getByText(/published and locked/i)).toBeVisible();
+});
 
-test('review state, invalid values, clearing, and queue movement persist correctly', async ({ page }) => {
-  await page.goto('/testing/session-draft/live')
-  const jump = page.getByLabel('Countermovement Vertical Jump attempt 1')
-  await jump.fill('999')
-  await expect(page.getByText('Check this value.')).toBeVisible()
-  await page.reload()
-  await expect(jump).toHaveValue('999')
-  await page.getByRole('button', { name: /Clear result/ }).click()
-  await expect(jump).toHaveValue('')
-  await page.getByRole('button', { name: /Next athlete/ }).click()
-  await expect(page.getByText('Taylor Kim', { exact: true }).last()).toBeVisible()
-  await page.getByRole('button', { name: /Review session/ }).click()
-  await expect(page).toHaveURL(/\/testing\/session-draft\/review$/)
-  await page.goto('/testing')
-  await expect(page.locator('article').filter({ hasText: 'Synthetic Return Testing' }).getByRole('link', { name: /Continue review/ })).toBeVisible()
-})
+test("review state, invalid values, clearing, and queue movement persist correctly", async ({
+  page,
+}) => {
+  await page.goto("/testing/session-draft/live");
+  const jump = page.getByLabel("Countermovement Vertical Jump attempt 1");
+  await jump.fill("999");
+  await expect(page.getByText("Check this value.")).toBeVisible();
+  await page.reload();
+  await expect(jump).toHaveValue("999");
+  await page.getByRole("button", { name: /Clear result/ }).click();
+  await expect(jump).toHaveValue("");
+  await page.getByRole("button", { name: /Next athlete/ }).click();
+  await expect(
+    page.getByText("Taylor Kim", { exact: true }).last(),
+  ).toBeVisible();
+  await page.getByRole("button", { name: /Review session/ }).click();
+  await expect(page).toHaveURL(/\/testing\/session-draft\/review$/);
+  await page.goto("/testing");
+  await expect(
+    page
+      .locator("article")
+      .filter({ hasText: "Synthetic Return Testing" })
+      .getByRole("link", { name: /Continue review/ }),
+  ).toBeVisible();
+});
 
-test('roster creation blocks duplicates and search and filters use the saved record', async ({ page }) => {
-  await page.goto('/athletes')
-  await page.getByRole('button', { name: /Add athlete/ }).click()
-  const addDialog = page.getByRole('dialog')
-  await addDialog.getByLabel('First name').fill('Jordan')
-  await addDialog.getByLabel('Last name').fill('Ellis')
-  await addDialog.getByLabel('Primary sport').fill('Football')
-  await addDialog.getByLabel('Training group').fill('Varsity')
-  await addDialog.getByRole('button', { name: 'Add athlete', exact: true }).click()
-  await expect(page.getByRole('alert')).toContainText('already exists')
-  await addDialog.getByLabel('First name').fill('Morgan')
-  await addDialog.getByLabel('Last name').fill('Blake')
-  await addDialog.getByLabel('Sex').selectOption('female')
-  await addDialog.getByLabel('Date of birth').fill('2010-06-12')
-  await addDialog.getByLabel('Grade').fill('10')
-  await addDialog.getByLabel('Primary sport').fill('Soccer')
-  await addDialog.getByLabel('Primary position').fill('Forward')
-  await addDialog.getByLabel('Additional sports').fill('Track, Basketball')
-  await addDialog.getByLabel('Additional positions').fill('Sprinter, Guard')
-  await addDialog.getByLabel('Training group').fill('Varsity')
-  await addDialog.getByRole('button', { name: 'Add athlete', exact: true }).click()
-  await page.getByLabel('Search athletes').fill('Morgan')
-  await expect(page.getByRole('heading', { name: 'Morgan Blake' })).toBeVisible()
-  await page.getByRole('heading', { name: 'Morgan Blake' }).click()
-  await expect(page.getByText('female', { exact: true })).toBeVisible()
-  await expect(page.getByText('Age 16', { exact: true })).toBeVisible()
-  await expect(page.locator('.profile-tags').getByText('Soccer', { exact: true })).toBeVisible()
-  await expect(page.locator('.profile-tags').getByText('Track', { exact: true })).toBeVisible()
-  await expect(page.locator('.profile-tags').getByText('Basketball', { exact: true })).toBeVisible()
-  await page.getByRole('button', { name: /Edit profile/ }).click()
-  const editDialog = page.getByRole('dialog')
-  await editDialog.getByLabel('Grade').fill('11')
-  await editDialog.getByLabel('Additional sports').fill('Track, Basketball, Lacrosse')
-  await editDialog.getByLabel('Replace athlete photo').setInputFiles({ name: 'morgan.svg', mimeType: 'image/svg+xml', buffer: Buffer.from('<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40"><rect width="40" height="40" fill="#087f8d"/></svg>') })
-  await editDialog.getByRole('button', { name: /Save profile/ }).click()
-  await expect(page.getByText('Grade 11', { exact: true })).toBeVisible()
-  await expect(page.locator('.profile-tags').getByText('Lacrosse', { exact: true })).toBeVisible()
-  await expect(page.locator('.avatar.xl img')).toBeVisible()
-  await page.getByRole('link', { name: /View report/ }).click()
-  await expect(page.locator('.report-avatar img')).toBeVisible()
-  await page.goBack()
-  await page.goBack()
-  await page.getByLabel('Search athletes').fill('')
-  await page.locator('.filter-bar label').filter({ hasText: 'Sport' }).getByRole('combobox').selectOption('Soccer')
-  await expect(page.getByText('athletes').last()).toContainText('3 athletes')
-})
+test("roster creation blocks duplicates and search and filters use the saved record", async ({
+  page,
+}) => {
+  await page.goto("/athletes");
+  await page.getByRole("button", { name: /Add athlete/ }).click();
+  const addDialog = page.getByRole("dialog");
+  await addDialog.getByLabel("First name").fill("Jordan");
+  await addDialog.getByLabel("Last name").fill("Ellis");
+  await addDialog.getByLabel("Primary sport").fill("Football");
+  await addDialog.getByLabel("Training group").fill("Varsity");
+  await addDialog
+    .getByRole("button", { name: "Add athlete", exact: true })
+    .click();
+  await expect(page.getByRole("alert")).toContainText("already exists");
+  await addDialog.getByLabel("First name").fill("Morgan");
+  await addDialog.getByLabel("Last name").fill("Blake");
+  await addDialog.getByLabel("Sex").selectOption("female");
+  await addDialog.getByLabel("Date of birth").fill("2010-06-12");
+  await addDialog.getByLabel("Grade").fill("10");
+  await addDialog.getByLabel("Primary sport").fill("Soccer");
+  await addDialog.getByLabel("Primary position").fill("Forward");
+  await addDialog.getByLabel("Additional sports").fill("Track, Basketball");
+  await addDialog.getByLabel("Additional positions").fill("Sprinter, Guard");
+  await addDialog.getByLabel("Training group").fill("Varsity");
+  await addDialog
+    .getByRole("button", { name: "Add athlete", exact: true })
+    .click();
+  await page.getByLabel("Search athletes").fill("Morgan");
+  await expect(page.getByRole("link", { name: /Morgan Blake/ })).toBeVisible();
+  await page.getByRole("link", { name: /Morgan Blake/ }).click();
+  await expect(page.getByText("female", { exact: true })).toBeVisible();
+  await expect(page.getByText("Age 16", { exact: true })).toBeVisible();
+  await expect(
+    page.locator(".profile-tags").getByText("Soccer", { exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.locator(".profile-tags").getByText("Track", { exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.locator(".profile-tags").getByText("Basketball", { exact: true }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: /Edit profile/ }).click();
+  const editDialog = page.getByRole("dialog");
+  await editDialog.getByLabel("Grade").fill("11");
+  await editDialog
+    .getByLabel("Additional sports")
+    .fill("Track, Basketball, Lacrosse");
+  await editDialog.getByLabel("Replace athlete photo").setInputFiles({
+    name: "morgan.svg",
+    mimeType: "image/svg+xml",
+    buffer: Buffer.from(
+      '<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40"><rect width="40" height="40" fill="#087f8d"/></svg>',
+    ),
+  });
+  await editDialog.getByRole("button", { name: /Save profile/ }).click();
+  await expect(page.getByText("Grade 11", { exact: true })).toBeVisible();
+  await expect(
+    page.locator(".profile-tags").getByText("Lacrosse", { exact: true }),
+  ).toBeVisible();
+  await expect(page.locator(".avatar.xl img")).toBeVisible();
+  await page.getByRole("link", { name: /View report/ }).click();
+  await expect(page.locator(".report-avatar img")).toBeVisible();
+  await page.goBack();
+  await page.goBack();
+  await page.getByLabel("Search athletes").fill("");
+  await page
+    .locator(".filter-bar label")
+    .filter({ hasText: "Sport" })
+    .getByRole("combobox")
+    .selectOption("Soccer");
+  await expect(page.locator(".result-count")).toHaveText("3 athletes");
+  await expect(
+    page.getByRole("link", { name: /Morgan Blake/ }).locator("img"),
+  ).toBeVisible();
+});
 
-test('CSV mapping imports valid rows, preserves errors, and all data downloads fire', async ({ page }) => {
-  await page.goto('/database')
-  const templateDownload = page.waitForEvent('download')
-  await page.getByRole('button', { name: /Download template/ }).click()
-  expect((await templateDownload).suggestedFilename()).toBe('fieldhouse-athlete-template.csv')
+test("CSV mapping imports valid rows, preserves errors, and all data downloads fire", async ({
+  page,
+}) => {
+  await page.goto("/database");
+  const templateDownload = page.waitForEvent("download");
+  await page.getByRole("button", { name: /Download template/ }).click();
+  expect((await templateDownload).suggestedFilename()).toBe(
+    "fieldhouse-athlete-template.csv",
+  );
 
   await page.locator('input[type="file"][accept*="csv"]').setInputFiles({
-    name: 'mapped-roster.csv',
-    mimeType: 'text/csv',
-    buffer: Buffer.from('given,family,activity,pos,squad\nMorgan,Blake,Soccer,Forward,Varsity\nJordan,Ellis,Football,Quarterback,Varsity\nNoGroup,Person,Soccer,Forward,')
-  })
-  await page.getByLabel('Map first_name').selectOption('given')
-  await page.getByLabel('Map last_name').selectOption('family')
-  await expect(page.getByText('1 valid · 2 with errors')).toBeVisible()
-  await expect(page.getByText(/already exists/)).toBeVisible()
-  await expect(page.getByText(/Group is required/)).toBeVisible()
-  await page.getByRole('button', { name: /Import 1 valid row/ }).click()
-  await expect(page.getByRole('button', { name: /Valid rows imported/ })).toBeDisabled()
-  await expect(page.getByText('mapped-roster.csv').last()).toBeVisible()
+    name: "mapped-roster.csv",
+    mimeType: "text/csv",
+    buffer: Buffer.from(
+      "given,family,activity,pos,squad\nMorgan,Blake,Soccer,Forward,Varsity\nJordan,Ellis,Football,Quarterback,Varsity\nNoGroup,Person,Soccer,Forward,",
+    ),
+  });
+  await page.getByLabel("Map first_name").selectOption("given");
+  await page.getByLabel("Map last_name").selectOption("family");
+  await expect(page.getByText("1 valid · 2 with errors")).toBeVisible();
+  await expect(page.getByText(/already exists/)).toBeVisible();
+  await expect(page.getByText(/Group is required/)).toBeVisible();
+  await page.getByRole("button", { name: /Import 1 valid row/ }).click();
+  await expect(
+    page.getByRole("button", { name: /Valid rows imported/ }),
+  ).toBeDisabled();
+  await expect(page.getByText("mapped-roster.csv").last()).toBeVisible();
 
-  const rosterDownload = page.waitForEvent('download')
-  await page.getByRole('button', { name: /Export roster CSV/ }).click()
-  expect((await rosterDownload).suggestedFilename()).toBe('fieldhouse-athletes.csv')
-  const backupDownload = page.waitForEvent('download')
-  await page.getByRole('button', { name: /Export full backup/ }).click()
-  expect((await backupDownload).suggestedFilename()).toMatch(/^fieldhouse-backup-\d{4}-\d{2}-\d{2}\.json$/)
-})
+  const rosterDownload = page.waitForEvent("download");
+  await page.getByRole("button", { name: /Export roster CSV/ }).click();
+  expect((await rosterDownload).suggestedFilename()).toBe(
+    "fieldhouse-athletes.csv",
+  );
+  const backupDownload = page.waitForEvent("download");
+  await page.getByRole("button", { name: /Export full backup/ }).click();
+  expect((await backupDownload).suggestedFilename()).toMatch(
+    /^fieldhouse-backup-\d{4}-\d{2}-\d{2}\.json$/,
+  );
+});
 
-test('backup round trip restores data and reset returns the synthetic demo', async ({ page }, testInfo) => {
-  await page.goto('/athletes')
-  await page.getByRole('button', { name: /Add athlete/ }).click()
-  const backupDialog = page.getByRole('dialog')
-  await backupDialog.getByLabel('First name').fill('Backup')
-  await backupDialog.getByLabel('Last name').fill('Proof')
-  await backupDialog.getByLabel('Primary sport').fill('Track')
-  await backupDialog.getByLabel('Training group').fill('Test')
-  await backupDialog.getByRole('button', { name: 'Add athlete', exact: true }).click()
-  await expect(page.locator('.result-count')).toHaveText('7 athletes')
-  await page.goto('/database')
-  const backupEvent = page.waitForEvent('download')
-  await page.getByRole('button', { name: /Export full backup/ }).click()
-  const backup = await backupEvent
-  const backupPath = testInfo.outputPath('fieldhouse-round-trip.json')
-  await backup.saveAs(backupPath)
+test("backup round trip restores data and reset returns the synthetic demo", async ({
+  page,
+}, testInfo) => {
+  await page.goto("/athletes");
+  await page.getByRole("button", { name: /Add athlete/ }).click();
+  const backupDialog = page.getByRole("dialog");
+  await backupDialog.getByLabel("First name").fill("Backup");
+  await backupDialog.getByLabel("Last name").fill("Proof");
+  await backupDialog.getByLabel("Primary sport").fill("Track");
+  await backupDialog.getByLabel("Training group").fill("Test");
+  await backupDialog
+    .getByRole("button", { name: "Add athlete", exact: true })
+    .click();
+  await expect(page.locator(".result-count")).toHaveText("7 athletes");
+  await page.goto("/database");
+  const backupEvent = page.waitForEvent("download");
+  await page.getByRole("button", { name: /Export full backup/ }).click();
+  const backup = await backupEvent;
+  const backupPath = testInfo.outputPath("fieldhouse-round-trip.json");
+  await backup.saveAs(backupPath);
 
-  page.once('dialog', (dialog) => dialog.accept())
-  await page.getByRole('button', { name: /Reset demo data/ }).click()
-  await expect(page.getByText('6 athletes').first()).toBeVisible()
-  page.once('dialog', (dialog) => dialog.accept())
-  await page.locator('input[type="file"][accept*="json"]').setInputFiles(backupPath)
-  await expect(page.getByText(/Restored 7 athletes/)).toBeVisible()
-  await page.goto('/athletes')
-  await page.getByLabel('Search athletes').fill('Backup Proof')
-  await expect(page.getByRole('heading', { name: 'Backup Proof' })).toBeVisible()
-})
+  page.once("dialog", (dialog) => dialog.accept());
+  await page.getByRole("button", { name: /Reset demo data/ }).click();
+  await expect(page.getByText("6 athletes").first()).toBeVisible();
+  page.once("dialog", (dialog) => dialog.accept());
+  await page
+    .locator('input[type="file"][accept*="json"]')
+    .setInputFiles(backupPath);
+  await expect(page.getByText(/Restored 7 athletes/)).toBeVisible();
+  await page.goto("/athletes");
+  await page.getByLabel("Search athletes").fill("Backup Proof");
+  await expect(page.getByRole("link", { name: /Backup Proof/ })).toBeVisible();
+});
 
-test('standards versions connect to session setup and report export and print controls execute', async ({ page }) => {
-  await page.goto('/standards')
-  await page.getByRole('button', { name: /Edit full protocol/ }).click()
-  await expect(page.getByLabel('New standard version')).toHaveValue('1.0.1')
-  await page.getByRole('button', { name: /Add test/ }).click()
-  await expect(page.locator('.editor-metric')).toHaveCount(6)
-  const addedTest = page.locator('.editor-metric').last()
-  await addedTest.getByLabel('Name').fill('Single Leg Hop Distance')
-  await addedTest.getByLabel('Short label').fill('Single leg hop')
-  await addedTest.getByLabel('Unit').fill('cm')
-  await addedTest.getByLabel('Attempts').fill('3')
-  await addedTest.getByLabel('Valid minimum').fill('0')
-  await addedTest.getByLabel('Valid maximum').fill('300')
-  await addedTest.getByLabel('Interpretation note').fill('Use the same collection protocol for every athlete.')
-  await page.getByRole('button', { name: /Add standards profile/ }).click()
-  await expect(page.getByRole('button', { name: /Remove New audience profile/ })).toBeVisible()
-  await page.getByRole('button', { name: /Remove New audience profile/ }).click()
-  await page.getByRole('button', { name: /Add standards profile/ }).click()
-  await page.getByLabel('Profile sex').selectOption('female')
-  await page.getByLabel('Minimum age').fill('14')
-  await page.getByLabel('Maximum age').fill('18')
-  await page.getByLabel('Grades').fill('9, 10, 11, 12')
-  await page.getByLabel('Sports').fill('Basketball')
-  await page.getByLabel('Positions').fill('Guard')
-  await page.getByRole('button', { name: /Save revision/ }).click()
-  await expect(page.getByRole('dialog')).toBeHidden()
-  await expect(page.getByLabel('Displayed standards version')).toHaveValue(/.+/)
-  await page.goto('/testing/new')
-  await expect(page.getByLabel('Scoring standard').getByRole('option', { name: /v1.0.1/ })).toHaveCount(1)
-  await expect(page.getByRole('button', { name: /Single Leg Hop Distance/ })).toBeVisible()
-  await expect(page.getByRole('button', { name: /Maya Brooks.*New audience profile/ })).toBeVisible()
+test("standards versions connect to session setup and report export and print controls execute", async ({
+  page,
+}) => {
+  await page.goto("/standards");
+  await page.getByRole("button", { name: /Edit full protocol/ }).click();
+  await expect(page.getByLabel("New standard version")).toHaveValue("1.0.1");
+  await page.getByRole("button", { name: /Add test/ }).click();
+  await expect(page.locator(".editor-metric")).toHaveCount(6);
+  const addedTest = page.locator(".editor-metric").last();
+  await addedTest.getByLabel("Name").fill("Single Leg Hop Distance");
+  await addedTest.getByLabel("Short label").fill("Single leg hop");
+  await addedTest.getByLabel("Unit").fill("cm");
+  await addedTest.getByLabel("Attempts").fill("3");
+  await addedTest.getByLabel("Valid minimum").fill("0");
+  await addedTest.getByLabel("Valid maximum").fill("300");
+  await addedTest
+    .getByLabel("Interpretation note")
+    .fill("Use the same collection protocol for every athlete.");
+  await page.getByRole("button", { name: /Add standards profile/ }).click();
+  await expect(
+    page.getByRole("button", { name: /Remove New audience profile/ }),
+  ).toBeVisible();
+  await page
+    .getByRole("button", { name: /Remove New audience profile/ })
+    .click();
+  await page.getByRole("button", { name: /Add standards profile/ }).click();
+  await page.getByLabel("Profile sex").selectOption("female");
+  await page.getByLabel("Minimum age").fill("14");
+  await page.getByLabel("Maximum age").fill("18");
+  await page.getByLabel("Grades").fill("9, 10, 11, 12");
+  await page.getByLabel("Sports").fill("Basketball");
+  await page.getByLabel("Positions").fill("Guard");
+  await page.getByRole("button", { name: /Save revision/ }).click();
+  await expect(page.getByRole("dialog")).toBeHidden();
+  await expect(page.getByLabel("Displayed standards version")).toHaveValue(
+    /.+/,
+  );
+  await page.goto("/testing/new");
+  await expect(
+    page.getByLabel("Scoring standard").getByRole("option", { name: /v1.0.1/ }),
+  ).toHaveCount(1);
+  await expect(
+    page.getByRole("button", { name: /Single Leg Hop Distance/ }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: /Maya Brooks.*New audience profile/ }),
+  ).toBeVisible();
 
-  await page.goto('/reporting/ath-a')
-  const reportDownload = page.waitForEvent('download')
-  await page.getByRole('button', { name: 'CSV' }).click()
-  expect((await reportDownload).suggestedFilename()).toBe('Jordan-Ellis-report.csv')
-  await page.evaluate(() => { window.print = () => { document.body.dataset.printInvoked = 'true' } })
-  await page.getByRole('button', { name: /Print/ }).click()
-  await expect(page.locator('body')).toHaveAttribute('data-print-invoked', 'true')
-})
+  await page.goto("/reporting/ath-a");
+  const reportDownload = page.waitForEvent("download");
+  await page.getByRole("button", { name: "CSV" }).click();
+  expect((await reportDownload).suggestedFilename()).toBe(
+    "Jordan-Ellis-report.csv",
+  );
+  await page.evaluate(() => {
+    window.print = () => {
+      document.body.dataset.printInvoked = "true";
+    };
+  });
+  await page.getByRole("button", { name: /Print/ }).click();
+  await expect(page.locator("body")).toHaveAttribute(
+    "data-print-invoked",
+    "true",
+  );
+});
 
-test('standards stay separate while database archetypes connect to rankings and reports', async ({ page }) => {
-  await page.goto('/standards')
-  await page.getByRole('tab', { name: /10 yard/ }).click()
-  await page.getByRole('button', { name: /Edit this test/ }).click()
-  await expect(page.getByRole('heading', { name: /Edit 10 Yard Sprint/ })).toBeVisible()
-  await expect(page.locator('.editor-metric')).toHaveCount(1)
-  await page.getByRole('button', { name: /Save revision/ }).click()
-  await page.goto('/database#archetypes')
-  await page.getByRole('button', { name: /New archetype/ }).click()
-  await page.getByLabel('Archetype name').fill('Male soccer · ages 16–18')
-  await page.getByLabel('Archetype minimum age').fill('16')
-  await page.getByLabel('Archetype maximum age').fill('18')
-  await page.getByLabel('Archetype sex').selectOption('male')
-  await page.getByLabel('Archetype priority').fill('100')
-  await page.getByLabel('Archetype sports').fill('Soccer')
-  await page.getByRole('button', { name: /Save archetype/ }).click()
-  await expect(page.getByRole('dialog')).toBeHidden()
-  await expect(page.getByRole('heading', { name: 'Male soccer · ages 16–18' })).toBeVisible()
-  await page.reload()
-  await expect(page.getByRole('heading', { name: 'Male soccer · ages 16–18' })).toBeVisible()
-  await page.goto('/rankings')
-  await page.getByLabel('Archetype').selectOption({ label: 'Male soccer · ages 16–18' })
-  await expect(page.getByText('Jordan Ellis')).toBeVisible()
-  await page.goto('/reporting/ath-a')
-  await expect(page.getByText('Male soccer · ages 16–18').first()).toBeVisible()
-})
+test("standards stay separate while database archetypes connect to rankings and reports", async ({
+  page,
+}) => {
+  await page.goto("/standards");
+  await page.getByRole("tab", { name: /10 yard/ }).click();
+  await page.getByRole("button", { name: /Edit this test/ }).click();
+  await expect(
+    page.getByRole("heading", { name: /Edit 10 Yard Sprint/ }),
+  ).toBeVisible();
+  await expect(page.locator(".editor-metric")).toHaveCount(1);
+  await page.getByRole("button", { name: /Save revision/ }).click();
+  await page.goto("/database#archetypes");
+  await page.getByRole("button", { name: /New archetype/ }).click();
+  await page.getByLabel("Archetype name").fill("Male soccer · ages 16–18");
+  await page.getByLabel("Archetype minimum age").fill("16");
+  await page.getByLabel("Archetype maximum age").fill("18");
+  await page.getByLabel("Archetype sex").selectOption("male");
+  await page.getByLabel("Archetype priority").fill("100");
+  await page.getByLabel("Archetype sports").fill("Soccer");
+  await page.getByRole("button", { name: /Save archetype/ }).click();
+  await expect(page.getByRole("dialog")).toBeHidden();
+  await expect(
+    page.getByRole("heading", { name: "Male soccer · ages 16–18" }),
+  ).toBeVisible();
+  await page.reload();
+  await expect(
+    page.getByRole("heading", { name: "Male soccer · ages 16–18" }),
+  ).toBeVisible();
+  await page.goto("/rankings");
+  await page
+    .getByLabel("Archetype")
+    .selectOption({ label: "Male soccer · ages 16–18" });
+  await expect(page.getByText("Jordan Ellis")).toBeVisible();
+  await page.goto("/reporting/ath-a");
+  await expect(
+    page.getByText("Male soccer · ages 16–18").first(),
+  ).toBeVisible();
+});
 
-test('branding persists and changes shell and reports without changing report scores', async ({ page }) => {
-  await page.goto('/reporting/ath-a')
-  const before = await page.locator('.score-badge strong').first().textContent()
-  await page.goto('/settings')
-  await page.getByLabel('Organization name').fill('Coach Test Lab')
-  await page.getByLabel('Primary color').fill('#6d28d9')
-  await page.getByLabel('Accent color').fill('#f59e0b')
-  await page.getByLabel('Shell color').fill('#1e293b')
-  await page.getByRole('button', { name: /Save branding/ }).click()
-  await expect(page.getByRole('button', { name: 'Saved' })).toBeVisible()
-  await page.reload()
-  await expect(page.getByLabel('Organization name')).toHaveValue('Coach Test Lab')
-  await expect(page.locator('.app-shell')).toHaveCSS('--green', '#6d28d9')
-  await expect(page.locator('.sidebar')).toHaveCSS('background-color', 'rgb(30, 41, 59)')
-  await expect(page.locator('.sidebar nav a.active')).toHaveCSS('color', 'rgb(245, 158, 11)')
-  await expect(page.locator('.eyebrow').first()).toHaveCSS('color', 'rgb(109, 40, 217)')
-  await page.goto('/reporting/ath-a')
-  await expect(page.getByText('Coach Test Lab').first()).toBeVisible()
-  await expect(page.locator('.radar-shape')).toHaveCSS('stroke', 'rgb(109, 40, 217)')
-  await expect(page.locator('.score-badge strong').first()).toHaveText(before ?? '')
-})
+test("branding persists and changes shell and reports without changing report scores", async ({
+  page,
+}) => {
+  await page.goto("/reporting/ath-a");
+  const before = await page
+    .locator(".score-badge strong")
+    .first()
+    .textContent();
+  await page.goto("/settings");
+  await page.getByLabel("Organization name").fill("Coach Test Lab");
+  await page.getByLabel("Primary color").fill("#6d28d9");
+  await page.getByLabel("Accent color").fill("#f59e0b");
+  await page.getByLabel("Shell color").fill("#1e293b");
+  await page.getByRole("button", { name: /Save branding/ }).click();
+  await expect(page.getByRole("button", { name: "Saved" })).toBeVisible();
+  await page.reload();
+  await expect(page.getByLabel("Organization name")).toHaveValue(
+    "Coach Test Lab",
+  );
+  await expect(page.locator(".app-shell")).toHaveCSS("--green", "#6d28d9");
+  await expect(page.locator(".sidebar")).toHaveCSS(
+    "background-color",
+    "rgb(30, 41, 59)",
+  );
+  await expect(page.locator(".sidebar nav a.active")).toHaveCSS(
+    "color",
+    "rgb(245, 158, 11)",
+  );
+  await expect(page.locator(".eyebrow").first()).toHaveCSS(
+    "color",
+    "rgb(109, 40, 217)",
+  );
+  await page.goto("/reporting/ath-a");
+  await expect(
+    page.locator(".report-brand-lockup").getByText("Coach Test Lab"),
+  ).toBeVisible();
+  await expect(page.locator(".radar-shape")).toHaveCSS(
+    "stroke",
+    "rgb(109, 40, 217)",
+  );
+  await expect(page.locator(".score-badge strong").first()).toHaveText(
+    before ?? "",
+  );
+});

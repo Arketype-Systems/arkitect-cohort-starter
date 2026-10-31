@@ -1,11 +1,13 @@
 {
   "name": "arkitect-cohort-starter",
   "private": true,
-  "version": "1.0.0",
+  "version": "1.1.0",
   "type": "module",
-  "engines": { "node": ">=20" },
+  "engines": {
+    "node": "^20.19.0 || >=22.12.0"
+  },
   "scripts": {
-    "dev": "vite --host 0.0.0.0",
+    "dev": "vite --host 127.0.0.1",
     "build": "tsc -b && vite build",
     "typecheck": "tsc -b --pretty false",
     "lint": "eslint . --max-warnings 0",
@@ -20,6 +22,8 @@
   "dependencies": {
     "dexie": "^4.2.0",
     "dexie-react-hooks": "^4.2.0",
+    "jspdf": "^4.2.1",
+    "jspdf-autotable": "^5.0.9",
     "lucide-react": "^0.536.0",
     "papaparse": "^5.5.3",
     "react": "^19.1.1",
@@ -27,6 +31,7 @@
     "react-router-dom": "^7.8.0"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.14.0",
     "@eslint/js": "^9.33.0",
     "@playwright/test": "^1.54.2",
     "@testing-library/jest-dom": "^6.6.4",
@@ -44,6 +49,6 @@
     "typescript": "~5.8.3",
     "typescript-eslint": "^8.39.1",
     "vite": "^7.1.1",
-    "vitest": "^3.2.4"
+    "vitest": "^4.1.12"
   }
 }
