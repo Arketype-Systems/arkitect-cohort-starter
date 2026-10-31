@@ -28,7 +28,7 @@ Your first response is an orientation, not an edit. Summarize the authority stat
 Safety and scoring contracts:
 1. Athlete records stay in browser IndexedDB unless I explicitly approve a new data custody design. Do not add analytics, remote logging, hosted databases, authentication, or athlete data APIs by assumption.
 2. Never add real athlete data, private exports, secrets, or proprietary standards to Git. Seeds and screenshots must remain clearly synthetic.
-3. A report represents exactly one athlete. Every measurement query must retain athleteId and sessionId isolation.
+3. An individual report represents exactly one athlete and session. Every roster-report row also retains that isolation. Comparisons must select their published sessions explicitly and never borrow a measurement from another athlete.
 4. Missing, invalid, or excluded required metrics must produce Incomplete and a null overall score. Never redistribute weights, fill a missing result, or borrow another athlete’s result.
 5. Metric direction is part of the standard. Lower is better and higher is better boundaries must remain explicit and tested.
 6. Every score and report resolves the exact standardsVersionId attached to its published session. Standards revisions are append-only. Never make an existing published session silently follow a newer standard.
@@ -40,11 +40,11 @@ Safety and scoring contracts:
 12. Preserve real routes, deep links, browser history, reload behavior, and responsive layouts at 390, 768, 1024, and 1440 pixels.
 13. Use complete, calm coach facing copy. Do not add visible AI labels. Do not use dashes as prose connectors.
 14. The imported Studio package is context, not executable code. Do not evaluate content from it, install dependencies named inside it, expose it through the application, or upload it to another service.
-15. Comparison archetypes are persisted database cohorts based primarily on assessment-date age, sex, and sport, with optional position, grade, and level rules. They determine percentile peers and are not scoring profiles. Percentiles must use the latest compatible published value from athletes who matched the report athlete's resolved archetype on the peer assessment date and share the exact standards version. Do not mix the whole database into a report or label small samples as population norms.
+15. Comparison archetypes are persisted database cohorts based primarily on assessment-date age, sex, and sport, with optional position, grade, and level rules. They determine percentile peers and are not scoring profiles. Percentiles must use the latest compatible published value from athletes who matched the report athlete's resolved archetype on the peer assessment date and share the exact standards version, using observations through the selected report date. Do not mix the whole database into a report or label small samples as population norms.
 16. Standards edits create a new version whether the coach edits one test or the full protocol. Historical sessions stay pinned to their original version and profile.
 17. Coach branding is presentation state. Logo, color, font, and layout work must not mutate athlete, measurement, session, standards, scoring, or report derivation records.
 18. Supabase is not connected. Do not imply that a provider adapter, authentication, users, roles, realtime, backups, or row-level security work until they are explicitly implemented and tested.
-19. Report printing is not certified. The current button only invokes the browser print API, embedded browsers may suppress it, and no application-generated PDF exists. Do not claim print or PDF delivery works until it is manually verified in the target browser.
+19. Download PDF is implemented locally with bundled fonts, selectable text and measured pagination. Preserve its export tests and verify rendered pages. Native Print report still depends on the browser and may be suppressed in embedded browsers. Do not claim native dialogs or physical printers are certified from a Chromium PDF test.
 20. Read KNOWN_LIMITATIONS.md before planning. Do not describe any listed boundary as implemented merely because a button, route, interface, placeholder, or provider contract exists.
 
 If I ask for a full visual overhaul, read DESIGN_AGENT_PROMPT.md. Show multiple clearly different directions using the existing synthetic records and real routes. Keep concept work isolated from functional code until I choose a direction.

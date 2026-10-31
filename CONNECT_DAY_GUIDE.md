@@ -9,7 +9,7 @@ The starter stores athlete records only in the current browser profile. Importin
 Confirm that you have all four items before the walkthrough begins:
 
 1. A personal GitHub account that you can access.
-2. Git and Node.js 20 or newer on your device.
+2. Git and Node.js 22.12 or newer on your device.
 3. Codex or Claude Code installed and signed in.
 4. Access to the Arketype cohort if you completed work in Assessment System Studio.
 

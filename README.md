@@ -1,14 +1,14 @@
 # Assessment System Starter
 
-Assessment System is a polished, local first assessment application for sports performance coaches. It manages multi-sport athlete profiles and photos, captures multiple testing attempts, reviews completeness, publishes versioned point totals, compares specific cohorts, imports and exports CSV files, and creates one athlete report at a time. “Fieldhouse” is only the synthetic starter organization name and can be replaced in Settings.
+Assessment System is a polished, local first assessment application for sports performance coaches. It manages multi-sport athlete profiles and photos, captures multiple testing attempts, reviews completeness, publishes versioned point totals, compares specific cohorts, imports and exports CSV files, and creates individual, before/after and roster reports. “Fieldhouse” is only the synthetic starter organization name and can be replaced in Settings.
 
 The included athletes, sessions, results, and standards are clearly labeled synthetic examples. No real athlete data or proprietary performance standards are included.
 
-Before a demonstration or customization, review [KNOWN_LIMITATIONS.md](KNOWN_LIMITATIONS.md). Report printing and PDF delivery are not currently certified, and the file records every other intentional product boundary that a coach or coding agent must describe honestly.
+Before a demonstration or customization, review [KNOWN_LIMITATIONS.md](KNOWN_LIMITATIONS.md). The file records PDF/browser coverage, local data custody, comparison rules and other product boundaries that a coach or coding agent must describe honestly.
 
 ## Create the repository you control
 
-You need a GitHub account, Git, Node.js 20 or newer, and a coding agent such as Codex or Claude Code. Follow the complete [Connect Day guide](CONNECT_DAY_GUIDE.md) when setting this up for the first time.
+You need a GitHub account, Git, Node.js 22.12 or newer, and a coding agent such as Codex or Claude Code. Follow the complete [Connect Day guide](CONNECT_DAY_GUIDE.md) when setting this up for the first time.
 
 1. Sign in to GitHub and open the [Arkitect Cohort Starter](https://github.com/Arketype-Systems/arkitect-cohort-starter).
 2. Select **Use this template**, then select **Create a new repository**.
@@ -60,7 +60,7 @@ All athlete data is stored in IndexedDB inside the current browser profile. The 
 
 A private GitHub repository protects the source repository. It does not make a later web deployment private. A standard deployment can be reachable by anyone with its address until authentication and access controls are configured. Keep the application local and synthetic until those controls, a coach-owned production database, backups, retention, and deletion are deliberately reviewed.
 
-Browser storage belongs to the device and browser profile. Clearing site data can erase it. Use **Database → Export full backup** regularly. A full backup is a JSON file. Roster interchange uses CSV.
+Browser storage belongs to the device and browser profile. Clearing site data can erase it. Use **Data and backup → Export full backup** regularly. A full backup is a JSON file. Roster interchange uses CSV. Full backup format 6 includes branding and saved preferences as well as assessment data; older published formats migrate explicitly.
 
 ## Everyday workflow
 
@@ -69,14 +69,20 @@ Browser storage belongs to the device and browser profile. Clearing site data ca
 3. Open **Testing → New session** to select a roster and tests. The matching standards profile is shown for each athlete and pinned to the session.
 4. Use live intake to record attempts. The best valid attempt is selected according to scoring direction and saved automatically.
 5. Open review. Publication remains locked until all required results are valid.
-6. Publish, then open **Reporting** for a three-page individual athlete report with summed points, metric grades, same-archetype percentiles, an adaptive radar chart, strengths, priorities, and history.
-7. Open **Database → Comparison archetypes** to define percentile cohorts, primarily by age, sex, and sport. Position, grade, and level are optional refinements. Open **Rankings** to compare point totals or raw test results and filter the leaderboard by those archetypes or athlete tags.
+6. Publish, then open **Reporting**. Choose an individual assessment, a before/after comparison or a roster report. Individual reports offer historical session selection, raw results, summed points, metric grades, percentile context, an adaptive radar and assessment history. Download a paginated PDF or CSV. Tied grades are not arbitrarily split into strengths and priorities.
+7. Open **Comparison groups** to define percentile cohorts, primarily by age, sex, and sport. Position, grade, and level are optional refinements. Open **Rankings** to compare point totals or raw test results and filter the leaderboard by those archetypes or athlete tags.
 
 Scoring profiles and comparison archetypes are intentionally separate. A scoring profile controls the versioned 0 through 4 bands pinned to a testing session. A comparison archetype is a persisted database rule that matches athlete tags on each assessment date and controls percentile peers. Editing an archetype updates report and ranking comparisons without changing stored measurements, historical standards versions, or point grades.
 
+## Roster and history
+
+The roster offers table and card views, name/date sorting, sport/group/status filters, pagination, saved views and multi-athlete selection. Selected athletes can start an assessment or open a roster report. Athlete profiles link to exact historical assessments and dated metric observations. Archive removes an athlete from new-session selection without deleting published history. Reactivate from the archived roster or athlete profile.
+
+Saved views omit free-text name searches. Recent reports store athlete IDs rather than duplicate names/photos. These preferences are included in a full backup.
+
 ## CSV import
 
-Open **Database** and download the athlete template. Upload the completed file to see interactive field mapping and row validation before importing. Standard and common column names map automatically. Other headers can be assigned with the mapping controls. Valid rows can be imported while invalid rows remain visible. Matching first and last names are treated as duplicates without regard to capitalization.
+Open **Data and backup** and download the athlete template. Upload the completed file to see interactive field mapping and row validation before importing. Standard and common column names map automatically. Other headers can be assigned with the mapping controls. Valid rows can be imported while invalid rows remain visible. Potential identity matches are flagged without regard to capitalization. A distinct birth date permits another person with the same name. Imports do not silently merge people.
 
 ## Build, test, and verify
 
@@ -96,19 +102,25 @@ npm run verify
 
 `npm run verify` also runs a tracked-file privacy scan. The importer has no user-interface changes, so importing Studio context does not require an additional browser test.
 
-The browser suite starts the development server and checks desktop, tablet, and mobile layouts. Install Chromium once if Playwright requests it:
+The browser suite starts the loopback-only development server and checks desktop, tablet and mobile layouts. It also exercises delayed storage, concurrent tabs, publication locks, restore boundaries, PDF downloads, keyboard controls and automated WCAG A/AA checks. CI runs these checks for pull requests and main. Install Chromium once if Playwright requests it:
 
 ```bash
 npx playwright install chromium
 ```
 
+## Reports and PDF
+
+Individual reports can reopen any published assessment belonging to the athlete. Before/after reports compare raw observations and retain each original grade. Deltas require the exact same version; changed definitions remain visible without a calculated delta. Roster reports explicitly select a standards version and assessment/date scope. Missing observations remain missing.
+
+Download PDF generates a file locally with searchable text and real page numbering. Larger rosters repeat column groups and headers. The PDF contains the assessment results and scope, while the screen also provides interactive navigation and charts. Fonts are bundled locally. See KNOWN_LIMITATIONS.md for supported scripts, browser-print differences and remaining accessibility limits.
+
 ## Backup, export, and reset
 
-- **Full backup:** Database → Export full backup.
-- **Full restore:** Database → Restore full backup. The entire file and every record relationship are validated before any existing data is replaced.
-- **Roster CSV:** Database → Export roster CSV.
+- **Full backup:** Data and backup → Export full backup.
+- **Full restore:** Data and backup → Restore full backup. The entire file and every record relationship are validated before any existing data is replaced.
+- **Roster CSV:** Data and backup → Export roster CSV.
 - **One athlete result CSV:** Reporting → open an athlete → CSV.
-- **Reset:** Database → Reset demo data. This removes local changes and restores the synthetic demo.
+- **Reset:** Data and backup → Reset demo data. This removes local changes and restores the synthetic demo.
 
 There is intentionally no silent cloud backup. Treat exported JSON files as sensitive when real athletes are entered.
 
@@ -142,7 +154,10 @@ Metric-specific valid ranges are part of each standards version. Live intake aut
 - `src/lib/standards.ts`: synthetic starter standard
 - `src/lib/scoring.ts`: deterministic scoring
 - `src/lib/csv.ts`: CSV parsing, validation, and export
-- `src/lib/report.ts`: one athlete report derivation
+- `src/lib/report.ts`: indexed individual report derivation and conservative comparison models
+- `src/lib/session-actions.ts`: transactional publication and result-status commands
+- `src/lib/attempt-drafts.ts`: immediate input text, acknowledged per-attempt persistence and failure recovery
+- `src/lib/report-pdf.ts`: measured text PDF exports with bundled fonts
 - `src/lib/branding.ts`: coach-owned brand tokens and visual presets
 - `src/lib/cloud.ts`: explicit local provider contract and future cloud boundary
 - `src/pages`: real application routes
