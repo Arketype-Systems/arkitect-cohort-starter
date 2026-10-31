@@ -34,6 +34,9 @@ test("live result autosaves to IndexedDB and survives reload", async ({
 });
 
 test("required pages have no viewport overflow", async ({ page }, testInfo) => {
+  // This journey visits twelve lazy routes and saves screenshots at each width.
+  // Budget the complete journey for shared CI runners; retain every assertion.
+  test.setTimeout(90_000);
   const routes = [
     "/",
     "/athletes",
